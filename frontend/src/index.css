@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #e9f0e4;
+  color: #1c2b22;
+}
+
+.ls-mono {
+  font-variant-numeric: tabular-nums;
+}
