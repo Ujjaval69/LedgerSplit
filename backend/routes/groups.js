@@ -8,12 +8,26 @@ const { simplifyDebts, computeNetBalances } = require("../utils/settleUp");
 const router = express.Router();
 router.use(protect);
 
-// GET /api/groups - all groups the logged-in user belongs to
+// GET /api/groups - all groups the logged-in user belongs to, each annotated
+// with the current user's own net balance in that group (used to power the
+// dashboard's aggregate "you're owed / you owe" summary without the frontend
+// having to fetch every group individually).
 router.get("/", async (req, res) => {
   const groups = await Group.find({ members: req.user._id })
     .populate("members", "name email")
     .sort({ updatedAt: -1 });
-  res.json(groups);
+
+  const withBalances = await Promise.all(
+    groups.map(async (group) => {
+      const expenses = await Expense.find({ group: group._id });
+      const memberIds = group.members.map((m) => m._id.toString());
+      const net = computeNetBalances(expenses, memberIds);
+      const yourBalance = net[req.user._id.toString()] || 0;
+      return { ...group.toObject(), yourBalance };
+    })
+  );
+
+  res.json(withBalances);
 });
 
 // POST /api/groups - create a group. memberEmails: array of emails to invite
