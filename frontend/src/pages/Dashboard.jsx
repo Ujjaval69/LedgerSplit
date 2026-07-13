@@ -5,11 +5,17 @@ import api from "../api/client";
 import Layout from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
 
-const ACCENTS = ["#B8892B", "#2F6B45", "#A8402A", "#3B6EA5", "#7A4FA0"];
+const ACCENT_PAIRS = [
+  ["#C79A3A", "#93691A"], // gold
+  ["#2A7A50", "#1B4E33"], // emerald
+  ["#B8472E", "#82301C"], // rust
+  ["#3E6FA8", "#294B76"], // steel blue
+  ["#8A5AAE", "#5B3B76"], // plum
+];
 function accentFor(id) {
   let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % ACCENTS.length;
-  return ACCENTS[hash];
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % ACCENT_PAIRS.length;
+  return ACCENT_PAIRS[hash];
 }
 
 function rupee(n) {
@@ -91,7 +97,8 @@ export default function Dashboard() {
           <h2 className="font-display text-lg font-semibold text-inksoft">Your Ledgers</h2>
           <button
             onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 bg-gold text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+            style={{ backgroundImage: "linear-gradient(135deg, #C79A3A, #93691A)" }}
+            className="flex items-center gap-2 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
           >
             <Plus size={16} /> New Group
           </button>
@@ -111,7 +118,8 @@ export default function Dashboard() {
             </p>
             <button
               onClick={() => setShowCreate(true)}
-              className="inline-flex items-center gap-2 bg-ink text-paper px-5 py-2.5 rounded-lg font-semibold text-sm hover:opacity-90 transition"
+              style={{ backgroundImage: "linear-gradient(135deg, #2A3A2C, #182419)" }}
+              className="inline-flex items-center gap-2 text-paper px-5 py-2.5 rounded-lg font-semibold text-sm hover:opacity-90 transition"
             >
               <Plus size={15} /> Create your first ledger
             </button>
@@ -119,7 +127,7 @@ export default function Dashboard() {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {groups.map((g, i) => {
-              const accent = accentFor(g._id);
+              const [c1, c2] = accentFor(g._id);
               const bal = g.yourBalance || 0;
               const isCredit = bal > 0.5;
               const isDebt = bal < -0.5;
@@ -132,8 +140,8 @@ export default function Dashboard() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div
-                      className="w-9 h-9 rounded-lg flex items-center justify-center font-display font-bold text-white transition-transform duration-200 group-hover:scale-105"
-                      style={{ backgroundColor: accent }}
+                      style={{ backgroundImage: `linear-gradient(135deg, ${c1}, ${c2})` }}
+                      className="w-9 h-9 rounded-lg flex items-center justify-center font-display font-bold text-white shadow-sm transition-transform duration-200 group-hover:scale-105"
                     >
                       {g.name.charAt(0).toUpperCase()}
                     </div>
@@ -173,17 +181,23 @@ export default function Dashboard() {
 }
 
 function StatCard({ icon, label, value, tone, delay }) {
-  const toneClass = tone === "credit" ? "text-credit" : "text-debt";
+  const gradient =
+    tone === "credit" ? "linear-gradient(135deg, #2A7A50, #1B4E33)" : "linear-gradient(135deg, #B8472E, #82301C)";
+  const textTone = tone === "credit" ? "text-credit" : "text-debt";
   return (
     <div
       style={{ animationDelay: `${delay}ms` }}
-      className="bg-card border border-line rounded-xl p-5 shadow-card animate-fadeInUp"
+      className="relative bg-card border border-line rounded-xl p-5 shadow-card animate-fadeInUp overflow-hidden"
     >
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${toneClass} bg-current/10`}>
-        <span className={toneClass}>{icon}</span>
+      <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundImage: gradient }} />
+      <div
+        style={{ backgroundImage: gradient }}
+        className="w-9 h-9 rounded-lg flex items-center justify-center mb-3 text-white shadow-sm"
+      >
+        {icon}
       </div>
       <div className="text-xs text-inksoft font-semibold mb-1">{label}</div>
-      <div className={`font-mono text-2xl font-bold ${toneClass}`}>{value}</div>
+      <div className={`font-mono text-2xl font-bold ${textTone}`}>{value}</div>
     </div>
   );
 }

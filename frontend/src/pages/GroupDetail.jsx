@@ -9,6 +9,10 @@ function rupee(n) {
   return "₹" + Math.round(n).toLocaleString("en-IN");
 }
 
+const CREDIT_GRADIENT = "linear-gradient(135deg, #2A7A50, #1B4E33)";
+const DEBT_GRADIENT = "linear-gradient(135deg, #B8472E, #82301C)";
+const GOLD_GRADIENT = "linear-gradient(135deg, #C79A3A, #93691A)";
+
 function initialsOf(name = "?") {
   return name
     .split(" ")
@@ -74,13 +78,15 @@ export default function GroupDetail() {
             </button>
             <button
               onClick={() => setShowSettle(true)}
-              className="flex items-center gap-2 bg-credit text-white px-4 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+              style={{ backgroundImage: CREDIT_GRADIENT }}
+              className="flex items-center gap-2 text-white px-4 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
             >
               <Stamp size={15} /> Simplify &amp; Settle
             </button>
             <button
               onClick={() => setShowAdd(true)}
-              className="flex items-center gap-2 bg-gold text-white px-4 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+              style={{ backgroundImage: GOLD_GRADIENT }}
+              className="flex items-center gap-2 text-white px-4 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
             >
               <Plus size={15} /> Add Expense
             </button>
@@ -96,7 +102,7 @@ export default function GroupDetail() {
             const bal = balances[m._id] || 0;
             const isCredit = bal > 0.5;
             const isDebt = bal < -0.5;
-            const ringColor = isCredit ? "#2F6B45" : isDebt ? "#A8402A" : "#C7D4C0";
+            const avatarGradient = isCredit ? CREDIT_GRADIENT : isDebt ? DEBT_GRADIENT : "linear-gradient(135deg, #C7D4C0, #A9BBA0)";
             return (
               <div
                 key={m._id}
@@ -105,8 +111,8 @@ export default function GroupDetail() {
               >
                 <div className="flex items-center gap-2.5 mb-3">
                   <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0"
-                    style={{ backgroundColor: ringColor }}
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-sm"
+                    style={{ backgroundImage: avatarGradient }}
                   >
                     {initialsOf(m.name)}
                   </div>
