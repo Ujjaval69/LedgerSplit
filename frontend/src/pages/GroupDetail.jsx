@@ -6,16 +6,8 @@ import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 import Layout from "../components/Layout";
 
-const CURRENCY_SYMBOLS = {
-  INR: "₹",
-  USD: "$",
-  EUR: "€",
-  GBP: "£"
-};
-
-function formatCurrency(n, curr = "INR") {
-  const symbol = CURRENCY_SYMBOLS[curr] || "₹";
-  return symbol + Math.round(n).toLocaleString(curr === "INR" ? "en-IN" : "en-US");
+function rupee(n) {
+  return "₹" + Math.round(n).toLocaleString("en-IN");
 }
 
 function initialsOf(name = "?") {
@@ -179,10 +171,9 @@ export default function GroupDetail() {
   async function recordSettlement(fromId, toId, amount) {
     const fromName = nameOf(fromId);
     const toName = nameOf(toId);
-    const symbol = CURRENCY_SYMBOLS[group?.currency || "INR"] || "₹";
     showConfirm(
       "Record Settlement",
-      `Do you want to record a settlement payment of ${symbol}${amount} from ${fromName} to ${toName}? This will reset their mutual balance.`,
+      `Do you want to record a settlement payment of ₹${amount} from ${fromName} to ${toName}? This will reset their mutual balance.`,
       async () => {
         try {
           await api.post("/expenses", {
@@ -195,7 +186,7 @@ export default function GroupDetail() {
             category: "Other"
           });
           setShowSettle(false);
-          toast(`Recorded settlement of ${symbol}${amount} successfully!`, "success");
+          toast(`Recorded settlement of ₹${amount} successfully!`, "success");
           load();
         } catch (err) {
           toast(err.response?.data?.message || "Could not record settlement", "error");
@@ -253,7 +244,6 @@ export default function GroupDetail() {
   }
 
   const { group, expenses, balances, settlements } = data;
-  const rupee = (n) => formatCurrency(n, group?.currency || "INR");
   const nameOf = (uid) =>
     group.members.find((m) => m._id === uid)?.name ||
     (group.formerMembers || []).find((m) => m._id === uid)?.name ||
@@ -940,9 +930,7 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
           </div>
           
           <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">
-              Amount ({CURRENCY_SYMBOLS[group?.currency || "INR"] || "₹"})
-            </label>
+            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Amount (₹)</label>
             <input
               type="number"
               step="0.01"
@@ -1027,7 +1015,7 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
                   <div key={id} className="flex items-center justify-between gap-3">
                     <span className="text-xs font-bold text-ink">{m?.name}</span>
                     <div className="flex items-center gap-1">
-                      {splitType === "exact" && <span className="text-xs text-inksoft">{CURRENCY_SYMBOLS[group?.currency || "INR"] || "₹"}</span>}
+                      {splitType === "exact" && <span className="text-xs text-inksoft">₹</span>}
                       <input
                         type="number"
                         step="0.01"
@@ -1172,7 +1160,7 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
 
             <div className="space-y-1.5">
               <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft">
-                Payment Amount ({CURRENCY_SYMBOLS[group?.currency || "INR"] || "₹"})
+                Payment Amount (₹)
               </label>
               <input
                 type="number"

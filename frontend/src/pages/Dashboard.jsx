@@ -19,20 +19,8 @@ function accentFor(id) {
   return ACCENT_PAIRS[hash];
 }
 
-const CURRENCY_SYMBOLS = {
-  INR: "₹",
-  USD: "$",
-  EUR: "€",
-  GBP: "£"
-};
-
-function formatCurrency(n, curr = "INR") {
-  const symbol = CURRENCY_SYMBOLS[curr] || "₹";
-  return symbol + Math.round(Math.abs(n)).toLocaleString(curr === "INR" ? "en-IN" : "en-US");
-}
-
 function rupee(n) {
-  return formatCurrency(n, "INR");
+  return "₹" + Math.round(Math.abs(n)).toLocaleString("en-IN");
 }
 
 function greeting() {
@@ -525,7 +513,7 @@ export default function Dashboard() {
                               }`}
                             >
                               {isCredit ? "+" : "-"}
-                              {formatCurrency(bal, g.currency)}
+                              {rupee(bal)}
                             </span>
                           ) : (
                             <span className="text-[10px] font-bold text-inksoft bg-paper dark:bg-paper/10 px-2 py-0.5 rounded-lg">
@@ -565,7 +553,6 @@ export default function Dashboard() {
 function CreateGroupModal({ onClose, onCreated }) {
   const [name, setName] = useState("");
   const [emails, setEmails] = useState("");
-  const [currency, setCurrency] = useState("INR");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -587,7 +574,7 @@ function CreateGroupModal({ onClose, onCreated }) {
         return;
       }
 
-      await api.post("/groups", { name, memberEmails, currency });
+      await api.post("/groups", { name, memberEmails });
       window.dispatchEvent(new Event("groupCreated"));
       onCreated();
     } catch (err) {
@@ -641,19 +628,6 @@ function CreateGroupModal({ onClose, onCreated }) {
               className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
               placeholder="priya@mail.com, rohan@mail.com"
             />
-          </div>
-          <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Base Currency</label>
-            <select
-              value={currency}
-              onChange={(e) => setCurrency(e.target.value)}
-              className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
-            >
-              <option value="INR">INR (₹)</option>
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
-            </select>
           </div>
           <button
             type="submit"
