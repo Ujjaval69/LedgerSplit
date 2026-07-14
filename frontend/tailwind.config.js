@@ -1,27 +1,32 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       colors: {
-        paper: "#E9F0E4",
-        card: "#FFFFFF",
-        ink: "#1C2B22",
-        inksoft: "#4B5C4F",
-        line: "#C7D4C0",
-        gold: "#B8892B",
-        credit: "#2F6B45",
-        debt: "#A8402A",
+        paper: "var(--color-paper)",
+        card: "var(--color-card)",
+        ink: "var(--color-ink)",
+        inksoft: "var(--color-inksoft)",
+        line: "var(--color-line)",
+        gold: "var(--color-brand)", // Map legacy gold elements to the primary brand color
+        brand: "var(--color-brand)",
+        "brand-dark": "var(--color-brand-dark)",
+        "brand-mint": "var(--color-brand-mint)",
+        "brand-soft": "var(--color-brand-soft)",
+        credit: "var(--color-credit)",
+        debt: "var(--color-debt)",
       },
       fontFamily: {
-        display: ["'Roboto Slab'", "serif"],
+        display: ["Inter", "sans-serif"],
         sans: ["Inter", "sans-serif"],
         mono: ["'IBM Plex Mono'", "monospace"],
       },
       boxShadow: {
-        card: "0 1px 2px rgba(28,43,34,0.04), 0 4px 12px rgba(28,43,34,0.06)",
-        "card-hover": "0 4px 8px rgba(28,43,34,0.06), 0 12px 24px rgba(28,43,34,0.1)",
-        modal: "0 20px 50px rgba(28,43,34,0.25)",
+        card: "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03)",
+        "card-hover": "0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03)",
+        modal: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
       },
       keyframes: {
         fadeIn: { "0%": { opacity: 0 }, "100%": { opacity: 1 } },

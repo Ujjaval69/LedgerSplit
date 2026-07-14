@@ -86,4 +86,46 @@ router.post("/:id/members", async (req, res) => {
   res.json(populated);
 });
 
+// DELETE /api/groups/:id - delete a group and all its expenses
+router.delete("/:id", async (req, res) => {
+  try {
+    const group = await Group.findOne({ _id: req.params.id, members: req.user._id });
+    if (!group) return res.status(404).json({ message: "Group not found or access denied" });
+
+    // Delete all expenses in this group
+    await Expense.deleteMany({ group: group._id });
+
+    // Delete the group
+    await group.deleteOne();
+
+    res.json({ message: "Group and associated expenses deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Could not delete group", error: err.message });
+  }
+});
+
+// DELETE /api/groups/:id/members/:memberId - remove a member from the group
+router.delete("/:id/members/:memberId", async (req, res) => {
+  try {
+    const group = await Group.findOne({ _id: req.params.id, members: req.user._id });
+    if (!group) return res.status(404).json({ message: "Group not found or access denied" });
+
+    // Remove the member
+    group.members = group.members.filter((m) => m.toString() !== req.params.memberId);
+    await group.save();
+
+    const populated = await group.populate("members", "name email");
+    
+    // Recalculate settlements/balances
+    const expenses = await Expense.find({ group: group._id }).populate("paidBy", "name email").sort({ createdAt: -1 });
+    const memberIds = group.members.map((m) => m._id.toString());
+    const net = computeNetBalances(expenses, memberIds);
+    const settlements = simplifyDebts(net);
+
+    res.json({ group: populated, expenses, balances: net, settlements });
+  } catch (err) {
+    res.status(500).json({ message: "Could not remove member", error: err.message });
+  }
+});
+
 module.exports = router;

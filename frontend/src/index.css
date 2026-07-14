@@ -2,11 +2,57 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-paper: #F9FAFB;
+  --color-card: #FFFFFF;
+  --color-ink: #111827;
+  --color-inksoft: #4B5563;
+  --color-line: #E5E7EB;
+  --color-brand: #14532D; /* Darker forest green matching "+ Add Project" */
+  --color-brand-dark: #162E2D;
+  --color-brand-mint: #2E7D32; /* Deeper mint accent */
+  --color-brand-soft: #E6F4EA; /* Soft light sage green */
+  --color-credit: #166534; /* Dark green for owed status */
+  --color-debt: #C62828; /* Slightly darker red for debt */
+}
+
+.dark {
+  --color-paper: #090D16;
+  --color-card: #111827;
+  --color-ink: #F9FAFB;
+  --color-inksoft: #9CA3AF;
+  --color-line: #1F2937;
+  --color-brand: #15803D; /* Deeper glowing green for dark mode */
+  --color-brand-dark: #022C22;
+  --color-brand-mint: #4ADE80;
+  --color-brand-soft: #166534;
+  --color-credit: #22C55E;
+  --color-debt: #EF5350;
+}
+
 body {
-  background-color: #e9f0e4;
-  color: #1c2b22;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: 'Inter', sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .ls-mono {
   font-variant-numeric: tabular-nums;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-line);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-inksoft);
 }

@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Users, X, BookOpen, TrendingUp, TrendingDown, Scale } from "lucide-react";
+import { Plus, Users, X, TrendingUp, TrendingDown, Scale, BookOpen } from "lucide-react";
 import api from "../api/client";
 import Layout from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
 
 const ACCENT_PAIRS = [
-  ["#C79A3A", "#93691A"], // gold
-  ["#2A7A50", "#1B4E33"], // emerald
-  ["#B8472E", "#82301C"], // rust
-  ["#3E6FA8", "#294B76"], // steel blue
-  ["#8A5AAE", "#5B3B76"], // plum
+  ["from-emerald-400 to-teal-600", "text-emerald-500"],
+  ["from-blue-400 to-indigo-600", "text-blue-500"],
+  ["from-orange-400 to-red-600", "text-red-500"],
+  ["from-purple-400 to-pink-600", "text-purple-500"],
+  ["from-yellow-400 to-amber-600", "text-amber-500"],
 ];
 function accentFor(id) {
   let hash = 0;
@@ -40,152 +40,186 @@ export default function Dashboard() {
     api
       .get("/groups")
       .then((res) => setGroups(res.data))
+      .catch(() => {})
       .finally(() => setLoading(false));
   }
 
   useEffect(refresh, []);
 
-  const totalOwed = groups.reduce((sum, g) => sum + Math.max(g.yourBalance || 0, 0), 0);
-  const totalOwe = groups.reduce((sum, g) => sum + Math.max(-(g.yourBalance || 0), 0), 0);
-  const net = totalOwed - totalOwe;
+  const totalProjects = groups.length;
+  const endedProjects = groups.filter((g) => Math.abs(g.yourBalance || 0) < 1).length;
+  const runningProjects = groups.filter((g) => Math.abs(g.yourBalance || 0) >= 1).length;
+  const pendingProjects = groups.filter((g) => (g.yourBalance || 0) < -1).length;
 
   return (
     <Layout onNewGroup={() => setShowCreate(true)}>
-      <main
-        className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-10 min-h-screen"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(to bottom, transparent, transparent 39px, rgba(28,43,34,0.035) 39px, rgba(28,43,34,0.035) 40px)",
-        }}
-      >
-        <div className="mb-6 sm:mb-8 animate-fadeInUp">
-          <div className="text-xs uppercase tracking-wider text-inksoft font-semibold mb-1">
-            Ledger Book
+      <main className="w-full px-6 py-8 sm:px-8 sm:py-10 min-h-[calc(100vh-4rem)]">
+        
+        {/* Welcome header & Add button */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <span className="text-[10px] uppercase font-bold tracking-wider text-inksoft">Ledger Book</span>
+            <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-ink mt-0.5 animate-fadeIn">
+              {greeting()}, {user?.name?.split(" ")[0]}
+            </h1>
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold">
-            {greeting()}, {user?.name?.split(" ")[0]}
-          </h1>
-        </div>
-
-        {!loading && groups.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
-            <StatCard
-              icon={<TrendingUp size={16} />}
-              label="You're owed"
-              value={rupee(totalOwed)}
-              tone="credit"
-              delay={0}
-            />
-            <StatCard
-              icon={<TrendingDown size={16} />}
-              label="You owe"
-              value={rupee(totalOwe)}
-              tone="debt"
-              delay={60}
-            />
-            <StatCard
-              icon={<Scale size={16} />}
-              label="Net position"
-              value={(net >= 0 ? "+" : "-") + rupee(net)}
-              tone={net >= 0 ? "credit" : "debt"}
-              delay={120}
-            />
-          </div>
-        )}
-
-        <div
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 animate-fadeInUp"
-          style={{ animationDelay: "160ms" }}
-        >
-          <h2 className="font-display text-lg font-semibold text-inksoft">Your Ledgers</h2>
           <button
             onClick={() => setShowCreate(true)}
-            style={{ backgroundImage: "linear-gradient(135deg, #C79A3A, #93691A)" }}
-            className="flex items-center justify-center gap-2 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
+            className="flex items-center justify-center gap-2 bg-brand text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:opacity-90 active:scale-95 transition-all"
           >
             <Plus size={16} /> New Group
           </button>
         </div>
 
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-32 rounded-xl bg-card/60 border border-line animate-pulse" />
-            ))}
-          </div>
-        ) : groups.length === 0 ? (
-          <div className="border-2 border-dashed border-line rounded-xl p-8 sm:p-14 text-center animate-fadeIn bg-card/40">
-            <div
-              className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-sm"
-              style={{ backgroundImage: "linear-gradient(135deg, #C79A3A, #93691A)" }}
-            >
-              <BookOpen size={24} className="text-white" />
-            </div>
-            <h3 className="font-display text-lg font-semibold mb-2">Start your first ledger</h3>
-            <p className="text-inksoft text-sm mb-6 max-w-sm mx-auto">
-              A ledger tracks shared costs for one group of people — pick whatever fits your life.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 mb-7">
-              {["Hostel room", "Trip with friends", "Flatmates", "Study group snacks"].map((ex) => (
-                <span
-                  key={ex}
-                  className="text-xs font-medium text-inksoft bg-paper border border-line rounded-full px-3 py-1.5"
-                >
-                  {ex}
-                </span>
+          <div className="space-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-32 rounded-2xl bg-card border border-line animate-pulse" />
               ))}
             </div>
-            <button
-              onClick={() => setShowCreate(true)}
-              style={{ backgroundImage: "linear-gradient(135deg, #2A3A2C, #182419)" }}
-              className="inline-flex items-center gap-2 text-paper px-5 py-2.5 rounded-lg font-semibold text-sm hover:opacity-90 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
-            >
-              <Plus size={15} /> Create your first ledger
-            </button>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-36 rounded-2xl bg-card border border-line animate-pulse" />
+              ))}
+            </div>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {groups.map((g, i) => {
-              const [c1, c2] = accentFor(g._id);
-              const bal = g.yourBalance || 0;
-              const isCredit = bal > 0.5;
-              const isDebt = bal < -0.5;
-              return (
-                <button
-                  key={g._id}
-                  onClick={() => navigate(`/groups/${g._id}`)}
-                  style={{ animationDelay: `${200 + i * 40}ms` }}
-                  className="group text-left bg-card border border-line rounded-xl p-5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 animate-fadeInUp"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div
-                      style={{ backgroundImage: `linear-gradient(135deg, ${c1}, ${c2})` }}
-                      className="w-9 h-9 rounded-lg flex items-center justify-center font-display font-bold text-white shadow-sm transition-transform duration-200 group-hover:scale-105"
-                    >
-                      {g.name.charAt(0).toUpperCase()}
+          <div className="space-y-8 animate-fadeIn">
+            {/* Summary Statistics Cards (as per layout image) */}
+            {groups.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Total Projects (Card 1: Forest Green) */}
+                <div className="bg-brand text-white rounded-2xl p-5 shadow-sm flex flex-col justify-between h-36 relative overflow-hidden transition-all hover:translate-y-[-2px]">
+                  <div className="flex justify-between items-start">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-white/80">Total Ledgers</span>
+                    <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white">
+                      <span className="text-sm font-sans font-bold">↗</span>
                     </div>
-                    {(isCredit || isDebt) && (
+                  </div>
+                  <div className="text-4xl font-extrabold tracking-tight">{totalProjects}</div>
+                  <span className="text-[10px] font-semibold text-white/70 block">Active split groups</span>
+                </div>
+
+                {/* Ended Projects (Card 2: White) */}
+                <div className="bg-card border border-line text-ink rounded-2xl p-5 shadow-sm flex flex-col justify-between h-36 transition-all hover:translate-y-[-2px] hover:shadow-card-hover">
+                  <div className="flex justify-between items-start">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-inksoft">Ended Ledgers</span>
+                    <div className="w-7 h-7 rounded-full bg-paper dark:bg-paper/10 flex items-center justify-center text-ink">
+                      <span className="text-sm font-sans font-bold">↗</span>
+                    </div>
+                  </div>
+                  <div className="text-4xl font-extrabold tracking-tight text-ink">{endedProjects}</div>
+                  <span className="text-[10px] font-semibold text-brand block">All settled up</span>
+                </div>
+
+                {/* Running Projects (Card 3: White) */}
+                <div className="bg-card border border-line text-ink rounded-2xl p-5 shadow-sm flex flex-col justify-between h-36 transition-all hover:translate-y-[-2px] hover:shadow-card-hover">
+                  <div className="flex justify-between items-start">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-inksoft">Running Ledgers</span>
+                    <div className="w-7 h-7 rounded-full bg-paper dark:bg-paper/10 flex items-center justify-center text-ink">
+                      <span className="text-sm font-sans font-bold">↗</span>
+                    </div>
+                  </div>
+                  <div className="text-4xl font-extrabold tracking-tight text-ink">{runningProjects}</div>
+                  <span className="text-[10px] font-semibold text-brand block">Active calculations</span>
+                </div>
+
+                {/* Pending Projects (Card 4: White) */}
+                <div className="bg-card border border-line text-ink rounded-2xl p-5 shadow-sm flex flex-col justify-between h-36 transition-all hover:translate-y-[-2px] hover:shadow-card-hover">
+                  <div className="flex justify-between items-start">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-inksoft">Pending Ledgers</span>
+                    <div className="w-7 h-7 rounded-full bg-paper dark:bg-paper/10 flex items-center justify-center text-ink">
+                      <span className="text-sm font-sans font-bold">↗</span>
+                    </div>
+                  </div>
+                  <div className="text-4xl font-extrabold tracking-tight text-ink">{pendingProjects}</div>
+                  <span className="text-[10px] font-semibold text-red-500 block">Balances to settle</span>
+                </div>
+              </div>
+            )}
+
+            {/* Groups Grid List */}
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-inksoft mb-4">Your Ledgers</h2>
+              
+              {groups.length === 0 ? (
+                <div className="border border-dashed border-line rounded-2xl p-8 sm:p-14 text-center bg-card/50">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-soft text-brand dark:bg-brand-soft/20 dark:text-brand-mint mx-auto mb-4 flex items-center justify-center shadow-sm">
+                    <BookOpen size={20} />
+                  </div>
+                  <h3 className="font-sans font-bold text-base text-ink mb-1.5">Start your first ledger</h3>
+                  <p className="text-inksoft text-xs mb-6 max-w-xs mx-auto leading-relaxed">
+                    A ledger tracks shared costs for one group of people — pick whatever fits your life.
+                  </p>
+                  <div className="flex flex-wrap justify-center gap-2 mb-6">
+                    {["Hostel room", "Trip with friends", "Flatmates", "Team snacks"].map((ex) => (
                       <span
-                        className={`text-xs font-mono font-semibold px-2 py-1 rounded-md ${
-                          isCredit ? "bg-credit/10 text-credit" : "bg-debt/10 text-debt"
-                        }`}
+                        key={ex}
+                        className="text-[10px] font-bold text-inksoft bg-card border border-line rounded-full px-3 py-1"
                       >
-                        {isCredit ? "+" : "-"}
-                        {rupee(bal)}
+                        {ex}
                       </span>
-                    )}
+                    ))}
                   </div>
-                  <h3 className="font-display font-semibold text-base mb-1.5">{g.name}</h3>
-                  <div className="flex items-center gap-1.5 text-xs text-inksoft">
-                    <Users size={13} /> {g.members.length} member{g.members.length !== 1 ? "s" : ""}
-                  </div>
-                </button>
-              );
-            })}
+                  <button
+                    onClick={() => setShowCreate(true)}
+                    className="inline-flex items-center gap-2 bg-brand text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition"
+                  >
+                    <Plus size={14} /> Create a Ledger
+                  </button>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {groups.map((g) => {
+                    const [gradient, textClass] = accentFor(g._id);
+                    const bal = g.yourBalance || 0;
+                    const isCredit = bal > 0.5;
+                    const isDebt = bal < -0.5;
+                    
+                    return (
+                      <button
+                        key={g._id}
+                        onClick={() => navigate(`/groups/${g._id}`)}
+                        className="group text-left bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center font-sans font-bold text-white shadow-sm shrink-0`}>
+                            {g.name.charAt(0).toUpperCase()}
+                          </div>
+                          {(isCredit || isDebt) ? (
+                            <span
+                              className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-lg ls-mono ${
+                                isCredit 
+                                  ? "bg-brand-soft text-brand dark:bg-brand-soft/20 dark:text-brand-mint" 
+                                  : "bg-red-500/10 text-red-500"
+                              }`}
+                            >
+                              {isCredit ? "+" : "-"}
+                              {rupee(bal)}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-inksoft bg-paper dark:bg-paper/10 px-2 py-0.5 rounded-lg">
+                              Settled up
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-sans font-bold text-sm text-ink truncate mb-1 group-hover:text-brand transition">{g.name}</h3>
+                        <div className="flex items-center gap-1 text-[10px] text-inksoft font-medium">
+                          <Users size={12} className="text-inksoft" />
+                          <span>{g.members.length} member{g.members.length !== 1 ? "s" : ""}</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>
 
+      {/* Modal for Group Creation */}
       {showCreate && (
         <CreateGroupModal
           onClose={() => setShowCreate(false)}
@@ -196,28 +230,6 @@ export default function Dashboard() {
         />
       )}
     </Layout>
-  );
-}
-
-function StatCard({ icon, label, value, tone, delay }) {
-  const gradient =
-    tone === "credit" ? "linear-gradient(135deg, #2A7A50, #1B4E33)" : "linear-gradient(135deg, #B8472E, #82301C)";
-  const textTone = tone === "credit" ? "text-credit" : "text-debt";
-  return (
-    <div
-      style={{ animationDelay: `${delay}ms` }}
-      className="relative bg-card border border-line rounded-xl p-5 shadow-card animate-fadeInUp overflow-hidden"
-    >
-      <div className="absolute top-0 left-0 right-0 h-1" style={{ backgroundImage: gradient }} />
-      <div
-        style={{ backgroundImage: gradient }}
-        className="w-9 h-9 rounded-lg flex items-center justify-center mb-3 text-white shadow-sm"
-      >
-        {icon}
-      </div>
-      <div className="text-xs text-inksoft font-semibold mb-1">{label}</div>
-      <div className={`font-mono text-2xl font-bold ${textTone}`}>{value}</div>
-    </div>
   );
 }
 
@@ -252,48 +264,48 @@ function CreateGroupModal({ onClose, onCreated }) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-card rounded-xl p-6 w-full max-w-sm shadow-modal animate-scaleIn"
+        className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-modal border border-line animate-scaleIn"
       >
         <div className="flex justify-between items-center mb-5">
-          <h3 className="font-display font-semibold text-lg">New Ledger</h3>
-          <button onClick={onClose} aria-label="Close dialog" className="text-inksoft hover:text-ink transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-credit rounded">
+          <h3 className="font-sans font-bold text-lg text-ink">New Ledger</h3>
+          <button onClick={onClose} aria-label="Close dialog" className="text-inksoft hover:text-ink transition rounded">
             <X size={18} />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 text-sm bg-red-50 border border-debt/30 text-debt rounded-md px-3 py-2 animate-fadeIn">
+          <div className="mb-4 text-xs bg-red-50 dark:bg-red-950/20 border border-debt/30 text-debt rounded-lg px-3 py-2.5 animate-fadeIn">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-inksoft mb-1">Group name</label>
+            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Group name</label>
             <input
               required
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-credit focus:ring-2 focus:ring-credit/15 transition-shadow"
-              placeholder="Hostel Room 204"
+              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
+              placeholder="e.g. Trip to Manali"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-inksoft mb-1">
-              Invite by email (comma separated, must already have an account)
+            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">
+              Invite by email (comma separated)
             </label>
             <input
               value={emails}
               onChange={(e) => setEmails(e.target.value)}
-              className="w-full border border-line rounded-md px-3 py-2 text-sm outline-none focus:border-credit focus:ring-2 focus:ring-credit/15 transition-shadow"
+              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
               placeholder="priya@mail.com, rohan@mail.com"
             />
           </div>
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-ink text-paper py-2.5 rounded-md font-semibold text-sm disabled:opacity-50 hover:opacity-90 transition"
+            className="w-full bg-brand text-white py-3 rounded-xl font-bold text-sm disabled:opacity-50 hover:opacity-90 active:scale-95 transition-all shadow-sm"
           >
             {saving ? "Creating..." : "Create Ledger"}
           </button>

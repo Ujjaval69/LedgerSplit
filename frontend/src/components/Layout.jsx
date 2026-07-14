@@ -1,23 +1,54 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { BookOpen, Users, LogOut, ChevronRight, Plus, Menu, X } from "lucide-react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import {
+  BookOpen,
+  LayoutDashboard,
+  LogOut,
+  ChevronRight,
+  Plus,
+  Menu,
+  X,
+  Sun,
+  Moon,
+  Bell,
+  Search,
+  Users
+} from "lucide-react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 export default function Layout({ children, onNewGroup }) {
   const [groups, setGroups] = useState([]);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem("ledgersplit_theme");
+    if (saved) return saved === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+  
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { id: activeGroupId } = useParams();
 
+  // Apply dark class to root document
   useEffect(() => {
-    api.get("/groups").then((res) => setGroups(res.data));
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("ledgersplit_theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("ledgersplit_theme", "light");
+    }
+  }, [isDark]);
+
+  useEffect(() => {
+    api.get("/groups").then((res) => setGroups(res.data)).catch(() => {});
   }, [activeGroupId]);
 
   useEffect(() => {
     setMobileOpen(false);
-  }, [activeGroupId]);
+  }, [location.pathname]);
 
   function goTo(path) {
     navigate(path);
@@ -25,149 +56,223 @@ export default function Layout({ children, onNewGroup }) {
   }
 
   return (
-    <div className="min-h-screen flex bg-paper">
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 h-14 bg-ink text-paper flex items-center justify-between px-4">
+    <div className="min-h-screen flex bg-paper text-ink transition-colors duration-200">
+      
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 h-16 bg-card border-b border-line flex items-center justify-between px-4 transition-colors duration-200">
         <button
           onClick={() => goTo("/dashboard")}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2.5"
           aria-label="Go to dashboard"
         >
-          <div
-            className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-            style={{ backgroundImage: "linear-gradient(135deg, #C79A3A, #93691A)" }}
-          >
-            <BookOpen size={14} className="text-white" />
+          <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center shrink-0 shadow-sm">
+            <BookOpen size={16} className="text-white" />
           </div>
-          <span className="font-display text-base font-bold">LedgerSplit</span>
+          <span className="font-sans text-lg font-bold tracking-tight">LedgerSplit</span>
         </button>
-        <button
-          onClick={() => setMobileOpen(true)}
-          aria-label="Open menu"
-          className="p-1.5 rounded-md hover:bg-white/10 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold"
-        >
-          <Menu size={20} />
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsDark(!isDark)}
+            className="p-2 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition"
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
+          <button
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+            className="p-2 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition"
+          >
+            <Menu size={20} />
+          </button>
+        </div>
       </div>
 
+      {/* Mobile Sidebar Overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40 animate-fadeIn"
+          className="lg:hidden fixed inset-0 bg-black/60 z-40 animate-fadeIn backdrop-blur-sm"
           onClick={() => setMobileOpen(false)}
           aria-hidden="true"
         />
       )}
 
+      {/* Sidebar Navigation */}
       <aside
-        className={`w-64 shrink-0 bg-ink text-paper flex flex-col relative overflow-hidden
-          fixed inset-y-0 left-0 z-50 transition-transform duration-300 ease-out
-          lg:static lg:translate-x-0
+        className={`w-64 shrink-0 bg-card border-r border-line flex flex-col fixed inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out
+          lg:static lg:translate-x-0 lg:h-screen lg:sticky lg:top-0
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div
-          className="absolute -top-16 -left-16 w-56 h-56 rounded-full opacity-20 pointer-events-none blur-3xl"
-          style={{ backgroundImage: "radial-gradient(circle, #C79A3A, transparent 70%)" }}
-        />
-
-        <div className="relative flex items-center justify-between px-5 py-5">
+        {/* Brand / Logo */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-line">
           <button
             onClick={() => goTo("/dashboard")}
-            className="flex items-center gap-2.5 text-left hover:opacity-90 transition"
+            className="flex items-center gap-3 text-left hover:opacity-85 transition"
           >
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 shadow-sm"
-              style={{ backgroundImage: "linear-gradient(135deg, #C79A3A, #93691A)" }}
-            >
-              <BookOpen size={16} className="text-white" />
+            <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center shrink-0 shadow-md shadow-brand/10">
+              <BookOpen size={18} className="text-white" />
             </div>
-            <span className="font-display text-lg font-bold tracking-wide">LedgerSplit</span>
+            <span className="font-sans text-xl font-bold tracking-tight bg-gradient-to-r from-ink to-brand bg-clip-text text-transparent">
+              LedgerSplit
+            </span>
           </button>
           <button
             onClick={() => setMobileOpen(false)}
             aria-label="Close menu"
-            className="lg:hidden p-1 text-paper/60 hover:text-paper transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold rounded"
+            className="lg:hidden p-1.5 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="relative px-3 flex-1 overflow-y-auto">
-          <div className="flex items-center justify-between px-3 pb-2">
-            <span className="text-[11px] uppercase tracking-wider text-paper/50 font-semibold">
-              Your Ledgers
-            </span>
-            {onNewGroup && (
-              <button
-                onClick={() => {
-                  onNewGroup();
-                  setMobileOpen(false);
-                }}
-                className="text-paper/60 hover:text-gold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold rounded"
-                aria-label="Create new group"
-                title="New group"
-              >
-                <Plus size={14} />
-              </button>
-            )}
+        {/* Sidebar Scrollable Body */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+          {/* Main Menu */}
+          <nav className="space-y-1">
+            <button
+              onClick={() => goTo("/dashboard")}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 ${
+                location.pathname === "/dashboard"
+                  ? "bg-brand-soft text-brand dark:bg-brand-soft/20 dark:text-brand-mint"
+                  : "text-inksoft hover:bg-paper hover:text-ink"
+              }`}
+            >
+              <LayoutDashboard size={16} />
+              <span>Dashboard</span>
+            </button>
+          </nav>
+
+          {/* Ledgers List Section */}
+          <div>
+            <div className="flex items-center justify-between px-3 mb-2">
+              <span className="text-[10px] uppercase tracking-wider text-inksoft font-bold">
+                Your Ledgers
+              </span>
+              {onNewGroup && (
+                <button
+                  onClick={() => {
+                    onNewGroup();
+                    setMobileOpen(false);
+                  }}
+                  className="p-1 rounded-md text-inksoft hover:text-brand hover:bg-brand-soft/30 dark:hover:bg-brand-soft/10 transition"
+                  title="Create new ledger"
+                >
+                  <Plus size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              {groups.map((g) => {
+                const isGroupActive = g._id === activeGroupId;
+                return (
+                  <button
+                    key={g._id}
+                    onClick={() => goTo(`/groups/${g._id}`)}
+                    className={`w-full flex items-center justify-between py-2 px-3 rounded-xl text-xs font-medium transition-colors text-left ${
+                      isGroupActive
+                        ? "bg-brand-soft text-brand font-semibold dark:bg-brand-soft/20 dark:text-brand-mint"
+                        : "text-inksoft hover:bg-paper hover:text-ink"
+                    }`}
+                  >
+                    <span className="truncate flex items-center gap-2">
+                      <Users size={12} className="shrink-0 text-inksoft" />
+                      <span className="truncate">{g.name}</span>
+                    </span>
+                    {isGroupActive && <ChevronRight size={10} className="shrink-0" />}
+                  </button>
+                );
+              })}
+              {groups.length === 0 && (
+                <p className="text-[11px] text-inksoft/60 px-3 py-1.5 italic">
+                  No active ledgers yet.
+                </p>
+              )}
+            </div>
           </div>
-
-          {groups.map((g) => {
-            const isActive = g._id === activeGroupId;
-            return (
-              <button
-                key={g._id}
-                onClick={() => goTo(`/groups/${g._id}`)}
-                aria-current={isActive ? "page" : undefined}
-                className={`relative w-full flex items-center justify-between gap-2 pl-3.5 pr-3 py-2.5 rounded-md mb-1 text-sm transition-all duration-150 overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold ${
-                  isActive
-                    ? "bg-paper text-ink font-semibold shadow-card"
-                    : "text-paper/70 hover:bg-white/5 hover:text-paper"
-                }`}
-              >
-                {isActive && (
-                  <span
-                    className="absolute left-0 top-0 bottom-0 w-1"
-                    style={{ backgroundImage: "linear-gradient(to bottom, #C79A3A, #93691A)" }}
-                  />
-                )}
-                <span className="flex items-center gap-2 truncate">
-                  <Users size={13} className="shrink-0" />
-                  <span className="truncate">{g.name}</span>
-                </span>
-                {isActive && <ChevronRight size={13} className="shrink-0" />}
-              </button>
-            );
-          })}
-
-          {groups.length === 0 && (
-            <p className="text-xs text-paper/40 px-3 py-2">No ledgers yet.</p>
-          )}
         </div>
 
-        <div className="relative px-5 py-4 border-t border-white/10 flex items-center justify-between">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white shrink-0 shadow-sm"
-              style={{ backgroundImage: "linear-gradient(135deg, #4A7FC0, #2A4E7A)" }}
-            >
+        {/* Sidebar Footer User Details */}
+        <div className="p-4 border-t border-line flex flex-col gap-3 bg-paper/20">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand to-brand-mint flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm">
               {(user?.name || "?").charAt(0).toUpperCase()}
             </div>
-            <div className="min-w-0">
-              <div className="text-sm font-semibold truncate">{user?.name}</div>
-              <div className="text-xs text-paper/50 truncate">{user?.email}</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-bold text-ink truncate">{user?.name}</div>
+              <div className="text-[10px] text-inksoft truncate">{user?.email}</div>
             </div>
           </div>
           <button
             onClick={logout}
-            aria-label="Log out"
-            className="text-paper/50 hover:text-debt transition shrink-0 ml-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold rounded"
-            title="Log out"
+            className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-bold text-red-500 hover:bg-red-500/5 dark:hover:bg-red-500/10 transition border border-red-500/10"
           >
-            <LogOut size={16} />
+            <LogOut size={13} />
+            <span>Logout</span>
           </button>
         </div>
       </aside>
 
-      <div className="flex-1 min-w-0 pt-14 lg:pt-0">{children}</div>
+      {/* Main Content Pane */}
+      <div className="flex-1 min-w-0 flex flex-col h-screen overflow-hidden">
+        
+        {/* Header */}
+        <header className="h-16 shrink-0 bg-card border-b border-line flex items-center justify-between px-6 lg:px-8 transition-colors duration-200 relative z-10">
+          {/* Search bar */}
+          <div className="relative w-full max-w-md hidden sm:block">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-inksoft" size={16} />
+            <input
+              type="text"
+              placeholder="Search groups, expenses..."
+              className="w-full pl-10 pr-4 py-2 rounded-xl border border-line bg-paper/30 outline-none text-sm transition focus:border-brand focus:ring-1 focus:ring-brand/10 dark:bg-paper/5"
+            />
+          </div>
+          <div className="sm:hidden w-8" /> {/* spacing element */}
+
+          {/* Right Header Controls */}
+          <div className="flex items-center gap-4">
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setIsDark(!isDark)}
+              className="p-2 rounded-xl text-inksoft hover:text-ink hover:bg-paper transition"
+              aria-label="Toggle theme"
+              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
+            {/* Notification bell */}
+            <div className="relative">
+              <button
+                className="p-2 rounded-xl text-inksoft hover:text-ink hover:bg-paper transition"
+                aria-label="Notifications"
+              >
+                <Bell size={18} />
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-brand"></span>
+              </button>
+            </div>
+
+            {/* Divider */}
+            <span className="h-5 w-px bg-line"></span>
+
+            {/* User details */}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-brand-soft text-brand dark:bg-brand-soft/20 dark:text-brand-mint flex items-center justify-center font-bold text-xs">
+                {(user?.name || "?").charAt(0).toUpperCase()}
+              </div>
+              <div className="hidden md:block text-left">
+                <div className="text-xs font-bold leading-tight">{user?.name}</div>
+                <div className="text-[9px] text-inksoft leading-none">{user?.email}</div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto pt-16 lg:pt-0">
+          {children}
+        </div>
+      </div>
     </div>
   );
 }
