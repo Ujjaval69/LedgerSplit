@@ -61,43 +61,39 @@ export default function GroupDetail() {
 
   return (
     <Layout>
-      <main className="max-w-4xl mx-auto px-8 py-10">
-        <div className="flex items-center justify-between mb-8 animate-fadeInUp">
+      <main className="max-w-4xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8 animate-fadeInUp">
           <div>
             <div className="text-xs uppercase tracking-wider text-inksoft font-semibold mb-1">
               Ledger Book
             </div>
-            <h1 className="font-display text-3xl font-bold">{group.name}</h1>
+            <h1 className="font-display text-2xl sm:text-3xl font-bold">{group.name}</h1>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setShowAddMember(true)}
-              className="flex items-center gap-2 border border-line bg-card text-inksoft px-4 py-2.5 rounded-lg font-semibold text-sm hover:border-ink/30 hover:-translate-y-0.5 transition-all duration-200"
+              className="flex items-center gap-2 border border-line bg-card text-inksoft px-4 py-2.5 rounded-lg font-semibold text-sm hover:border-ink/30 hover:-translate-y-0.5 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-credit"
             >
               <UserPlus size={15} /> Add Member
             </button>
             <button
               onClick={() => setShowSettle(true)}
               style={{ backgroundImage: CREDIT_GRADIENT }}
-              className="flex items-center gap-2 text-white px-4 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+              className="flex items-center gap-2 text-white px-4 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-credit"
             >
               <Stamp size={15} /> Simplify &amp; Settle
             </button>
             <button
               onClick={() => setShowAdd(true)}
               style={{ backgroundImage: GOLD_GRADIENT }}
-              className="flex items-center gap-2 text-white px-4 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+              className="flex items-center gap-2 text-white px-4 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
             >
               <Plus size={15} /> Add Expense
             </button>
           </div>
         </div>
 
-        {/* Balance cards */}
-        <div
-          className="grid gap-3 mb-8"
-          style={{ gridTemplateColumns: `repeat(${Math.min(group.members.length, 4)}, minmax(0,1fr))` }}
-        >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6 sm:mb-8">
           {group.members.map((m, i) => {
             const bal = balances[m._id] || 0;
             const isCredit = bal > 0.5;
@@ -119,7 +115,7 @@ export default function GroupDetail() {
                   <span className="text-sm font-semibold truncate">{m.name}</span>
                 </div>
                 <div
-                  className={`font-mono text-xl font-semibold ${
+                  className={`font-mono text-lg sm:text-xl font-semibold ${
                     isCredit ? "text-credit" : isDebt ? "text-debt" : "text-inksoft"
                   }`}
                 >
@@ -134,45 +130,47 @@ export default function GroupDetail() {
           })}
         </div>
 
-        {/* Expense ledger table */}
-        <div className="bg-card border border-line rounded-xl overflow-hidden shadow-card animate-fadeInUp">
-          <div className="grid grid-cols-[90px_1fr_130px_110px_36px] px-5 py-3 border-b border-line text-[11px] uppercase tracking-wider text-inksoft font-semibold bg-paper/40">
-            <span>Date</span>
-            <span>Particulars</span>
-            <span>Paid By</span>
-            <span className="text-right">Amount</span>
-            <span></span>
-          </div>
-          <div className="max-h-96 overflow-y-auto">
-            {expenses.length === 0 && (
-              <div className="p-10 text-center text-inksoft text-sm">
-                <Receipt size={22} className="mx-auto mb-2 text-inksoft/40" />
-                No expenses logged yet. Add the first one for this group.
-              </div>
-            )}
-            {expenses.map((exp) => (
-              <div
-                key={exp._id}
-                className="group grid grid-cols-[90px_1fr_130px_110px_36px] px-5 py-3.5 border-b border-line/60 text-sm items-center hover:bg-paper/40 transition-colors duration-150"
-              >
-                <span className="text-inksoft">
-                  {new Date(exp.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                </span>
-                <span>
-                  {exp.description}
-                  <div className="text-xs text-inksoft/70 mt-0.5">split {exp.splitAmong.length} ways</div>
-                </span>
-                <span className="truncate">{exp.paidBy.name}</span>
-                <span className="font-mono text-right font-semibold">{rupee(exp.amount)}</span>
-                <button
-                  onClick={() => deleteExpense(exp._id)}
-                  className="justify-self-end text-inksoft/30 hover:text-debt opacity-0 group-hover:opacity-100 transition-all duration-150"
-                  title="Delete expense"
+        <div className="bg-card border border-line rounded-xl overflow-hidden shadow-card animate-fadeInUp overflow-x-auto">
+          <div className="min-w-[560px]">
+            <div className="grid grid-cols-[90px_1fr_130px_110px_36px] px-5 py-3 border-b border-line text-[11px] uppercase tracking-wider text-inksoft font-semibold bg-paper/40">
+              <span>Date</span>
+              <span>Particulars</span>
+              <span>Paid By</span>
+              <span className="text-right">Amount</span>
+              <span></span>
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              {expenses.length === 0 && (
+                <div className="p-10 text-center text-inksoft text-sm">
+                  <Receipt size={22} className="mx-auto mb-2 text-inksoft/40" />
+                  No expenses logged yet. Add the first one for this group.
+                </div>
+              )}
+              {expenses.map((exp) => (
+                <div
+                  key={exp._id}
+                  className="group grid grid-cols-[90px_1fr_130px_110px_36px] px-5 py-3.5 border-b border-line/60 text-sm items-center hover:bg-paper/40 transition-colors duration-150"
                 >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+                  <span className="text-inksoft">
+                    {new Date(exp.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                  </span>
+                  <span>
+                    {exp.description}
+                    <div className="text-xs text-inksoft/70 mt-0.5">split {exp.splitAmong.length} ways</div>
+                  </span>
+                  <span className="truncate">{exp.paidBy.name}</span>
+                  <span className="font-mono text-right font-semibold">{rupee(exp.amount)}</span>
+                  <button
+                    onClick={() => deleteExpense(exp._id)}
+                    aria-label={`Delete expense: ${exp.description}`}
+                    className="justify-self-end text-inksoft/30 hover:text-debt opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-150 focus-visible:outline focus-visible:outline-2 focus-visible:outline-debt rounded"
+                    title="Delete expense"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -219,7 +217,7 @@ function AddExpenseModal({ group, currentUserId, onClose, onAdded }) {
   const [amount, setAmount] = useState("");
   const [paidBy, setPaidBy] = useState(currentUserId);
   const [splitAmong, setSplitAmong] = useState(group.members.map((m) => m._id));
-  const [splitType, setSplitType] = useState("equal"); // "equal" | "percentage" | "exact"
+  const [splitType, setSplitType] = useState("equal");
   const [splitDetails, setSplitDetails] = useState({});
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);

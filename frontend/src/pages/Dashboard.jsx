@@ -52,23 +52,23 @@ export default function Dashboard() {
   return (
     <Layout onNewGroup={() => setShowCreate(true)}>
       <main
-        className="max-w-5xl mx-auto px-8 py-10 min-h-screen"
+        className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-10 min-h-screen"
         style={{
           backgroundImage:
             "repeating-linear-gradient(to bottom, transparent, transparent 39px, rgba(28,43,34,0.035) 39px, rgba(28,43,34,0.035) 40px)",
         }}
       >
-        <div className="mb-8 animate-fadeInUp">
+        <div className="mb-6 sm:mb-8 animate-fadeInUp">
           <div className="text-xs uppercase tracking-wider text-inksoft font-semibold mb-1">
             Ledger Book
           </div>
-          <h1 className="font-display text-3xl font-bold">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold">
             {greeting()}, {user?.name?.split(" ")[0]}
           </h1>
         </div>
 
         {!loading && groups.length > 0 && (
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
             <StatCard
               icon={<TrendingUp size={16} />}
               label="You're owed"
@@ -93,12 +93,15 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-4 animate-fadeInUp" style={{ animationDelay: "160ms" }}>
+        <div
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 animate-fadeInUp"
+          style={{ animationDelay: "160ms" }}
+        >
           <h2 className="font-display text-lg font-semibold text-inksoft">Your Ledgers</h2>
           <button
             onClick={() => setShowCreate(true)}
             style={{ backgroundImage: "linear-gradient(135deg, #C79A3A, #93691A)" }}
-            className="flex items-center gap-2 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+            className="flex items-center justify-center gap-2 text-white px-5 py-2.5 rounded-lg font-semibold text-sm shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
           >
             <Plus size={16} /> New Group
           </button>
@@ -111,15 +114,31 @@ export default function Dashboard() {
             ))}
           </div>
         ) : groups.length === 0 ? (
-          <div className="border-2 border-dashed border-line rounded-xl p-16 text-center animate-fadeIn bg-card/40">
-            <BookOpen size={28} className="mx-auto text-gold mb-3" />
-            <p className="text-inksoft mb-4">
-              No ledgers yet. Create one for your hostel room, a trip, or anything you split costs for.
+          <div className="border-2 border-dashed border-line rounded-xl p-8 sm:p-14 text-center animate-fadeIn bg-card/40">
+            <div
+              className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center shadow-sm"
+              style={{ backgroundImage: "linear-gradient(135deg, #C79A3A, #93691A)" }}
+            >
+              <BookOpen size={24} className="text-white" />
+            </div>
+            <h3 className="font-display text-lg font-semibold mb-2">Start your first ledger</h3>
+            <p className="text-inksoft text-sm mb-6 max-w-sm mx-auto">
+              A ledger tracks shared costs for one group of people — pick whatever fits your life.
             </p>
+            <div className="flex flex-wrap justify-center gap-2 mb-7">
+              {["Hostel room", "Trip with friends", "Flatmates", "Study group snacks"].map((ex) => (
+                <span
+                  key={ex}
+                  className="text-xs font-medium text-inksoft bg-paper border border-line rounded-full px-3 py-1.5"
+                >
+                  {ex}
+                </span>
+              ))}
+            </div>
             <button
               onClick={() => setShowCreate(true)}
               style={{ backgroundImage: "linear-gradient(135deg, #2A3A2C, #182419)" }}
-              className="inline-flex items-center gap-2 text-paper px-5 py-2.5 rounded-lg font-semibold text-sm hover:opacity-90 transition"
+              className="inline-flex items-center gap-2 text-paper px-5 py-2.5 rounded-lg font-semibold text-sm hover:opacity-90 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gold"
             >
               <Plus size={15} /> Create your first ledger
             </button>
@@ -237,7 +256,7 @@ function CreateGroupModal({ onClose, onCreated }) {
       >
         <div className="flex justify-between items-center mb-5">
           <h3 className="font-display font-semibold text-lg">New Ledger</h3>
-          <button onClick={onClose} className="text-inksoft hover:text-ink transition">
+          <button onClick={onClose} aria-label="Close dialog" className="text-inksoft hover:text-ink transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-credit rounded">
             <X size={18} />
           </button>
         </div>
