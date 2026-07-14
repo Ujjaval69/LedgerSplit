@@ -31,6 +31,10 @@ function formatCurrency(n, curr = "INR") {
   return symbol + Math.round(Math.abs(n)).toLocaleString(curr === "INR" ? "en-IN" : "en-US");
 }
 
+function rupee(n) {
+  return formatCurrency(n, "INR");
+}
+
 function greeting() {
   const h = new Date().getHours();
   if (h < 12) return "Good morning";
