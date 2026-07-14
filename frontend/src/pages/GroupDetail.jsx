@@ -419,7 +419,7 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
               autoFocus
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
+              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5 text-ink"
               placeholder="e.g. Pizza dinner"
             />
           </div>
@@ -429,7 +429,7 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
+              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5 text-ink"
             >
               {["Food", "Travel", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"].map((cat) => (
                 <option key={cat} value={cat}>
@@ -447,7 +447,7 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
               required
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
+              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5 text-ink"
               placeholder="0.00"
             />
           </div>
@@ -457,7 +457,7 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
             <select
               value={paidBy}
               onChange={(e) => setPaidBy(e.target.value)}
-              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
+              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5 text-ink"
             >
               {group.members.map((m) => (
                 <option key={m._id} value={m._id}>
@@ -531,7 +531,7 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
                         step="0.01"
                         value={splitDetails[id] || ""}
                         onChange={(e) => updateDetail(id, e.target.value)}
-                        className="w-20 border border-line rounded-lg px-2 py-1 text-xs outline-none bg-card focus:border-brand focus:ring-1 focus:ring-brand/10 transition"
+                        className="w-20 border border-line rounded-lg px-2 py-1 text-xs outline-none bg-card focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
                         placeholder="0"
                       />
                       {splitType === "percentage" && <span className="text-xs text-inksoft">%</span>}
@@ -631,8 +631,16 @@ function AddMemberModal({ groupId, onClose, onAdded }) {
     e.preventDefault();
     setSaving(true);
     setError("");
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setError("Please enter a valid email address.");
+      setSaving(false);
+      return;
+    }
+
     try {
-      await api.post(`/groups/${groupId}/members`, { email });
+      await api.post(`/groups/${groupId}/members`, { email: email.trim() });
       onAdded();
     } catch (err) {
       setError(err.response?.data?.message || "Could not add member");
@@ -674,7 +682,7 @@ function AddMemberModal({ groupId, onClose, onAdded }) {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
+              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5 text-ink"
               placeholder="friend@test.com"
             />
           </div>

@@ -444,6 +444,15 @@ function CreateGroupModal({ onClose, onCreated }) {
         .split(",")
         .map((e) => e.trim())
         .filter(Boolean);
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const invalidEmails = memberEmails.filter(email => !emailRegex.test(email));
+      if (invalidEmails.length > 0) {
+        setError(`Invalid email format: ${invalidEmails.join(", ")}`);
+        setSaving(false);
+        return;
+      }
+
       await api.post("/groups", { name, memberEmails });
       onCreated();
     } catch (err) {
@@ -483,7 +492,7 @@ function CreateGroupModal({ onClose, onCreated }) {
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
+              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5 text-ink"
               placeholder="e.g. Trip to Manali"
             />
           </div>
@@ -494,7 +503,7 @@ function CreateGroupModal({ onClose, onCreated }) {
             <input
               value={emails}
               onChange={(e) => setEmails(e.target.value)}
-              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
+              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5 text-ink"
               placeholder="priya@mail.com, rohan@mail.com"
             />
           </div>

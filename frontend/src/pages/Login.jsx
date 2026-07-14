@@ -109,6 +109,12 @@ export default function Login() {
   async function handleResetPasswordSubmit(e) {
     e.preventDefault();
     setError("");
+    
+    if (newPassword.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
     setLoading(true);
     try {
       await api.post("/auth/reset-password", { email: verifyEmailAddress, otp, password: newPassword });
