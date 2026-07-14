@@ -20,6 +20,16 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+    };
+    window.addEventListener("unauthorizedRedirect", handleUnauthorized);
+    return () => {
+      window.removeEventListener("unauthorizedRedirect", handleUnauthorized);
+    };
+  }, []);
+
   async function login(email, password) {
     const res = await api.post("/auth/login", { email, password });
     localStorage.setItem("ledgersplit_token", res.data.token);

@@ -64,10 +64,9 @@ router.post("/", async (req, res) => {
 
 // GET /api/groups/:id - single group with balances + simplified settlement
 router.get("/:id", async (req, res) => {
-  const group = await Group.findOne({ _id: req.params.id, members: req.user._id }).populate(
-    "members",
-    "name email"
-  );
+  const group = await Group.findOne({ _id: req.params.id, members: req.user._id })
+    .populate("members", "name email")
+    .populate("formerMembers", "name email");
   if (!group) return res.status(404).json({ message: "Group not found" });
 
   const expenses = await Expense.find({ group: group._id }).populate("paidBy", "name email").sort({ createdAt: -1 });
@@ -88,6 +87,9 @@ router.post("/:id/members", async (req, res) => {
   if (!user) return res.status(404).json({ message: "No user with that email has registered yet" });
 
   if (!group.members.includes(user._id)) {
+    if (group.formerMembers) {
+      group.formerMembers = group.formerMembers.filter((m) => m.toString() !== user._id.toString());
+    }
     group.members.push(user._id);
     await group.save();
     
@@ -99,8 +101,31 @@ router.post("/:id/members", async (req, res) => {
       message: `${req.user.name} added ${user.name} to the group.`,
     });
   }
-  const populated = await group.populate("members", "name email");
+  const populated = await group.populate("members", "name email").then(g => g.populate("formerMembers", "name email"));
   res.json(populated);
+});
+
+// PATCH /api/groups/:id/archive - toggle archive status of a group
+router.patch("/:id/archive", async (req, res) => {
+  try {
+    const group = await Group.findOne({ _id: req.params.id, members: req.user._id });
+    if (!group) return res.status(404).json({ message: "Group not found or access denied" });
+    
+    group.isArchived = !group.isArchived;
+    await group.save();
+    
+    // Create activity
+    await Activity.create({
+      user: req.user._id,
+      group: group._id,
+      action: "edit_expense",
+      message: `${req.user.name} ${group.isArchived ? "archived" : "unarchived"} the ledger book "${group.name}".`,
+    });
+
+    res.json(group);
+  } catch (err) {
+    res.status(500).json({ message: "Could not archive group", error: err.message });
+  }
 });
 
 // DELETE /api/groups/:id - delete a group and all its expenses
@@ -127,15 +152,22 @@ router.delete("/:id/members/:memberId", async (req, res) => {
     const group = await Group.findOne({ _id: req.params.id, members: req.user._id });
     if (!group) return res.status(404).json({ message: "Group not found or access denied" });
 
-    // Remove the member
-    group.members = group.members.filter((m) => m.toString() !== req.params.memberId);
-    await group.save();
+    // Remove the member and move to formerMembers
+    const memberId = req.params.memberId;
+    if (group.members.map(String).includes(memberId)) {
+      group.members = group.members.filter((m) => m.toString() !== memberId);
+      if (!group.formerMembers) group.formerMembers = [];
+      if (!group.formerMembers.map(String).includes(memberId)) {
+        group.formerMembers.push(memberId);
+      }
+      await group.save();
+    }
 
-    const populated = await group.populate("members", "name email");
+    const populated = await group.populate("members", "name email").then(g => g.populate("formerMembers", "name email"));
     
-    // Recalculate settlements/balances
+    // Recalculate settlements/balances (former members still belong to calculations of past expenses!)
     const expenses = await Expense.find({ group: group._id }).populate("paidBy", "name email").sort({ createdAt: -1 });
-    const memberIds = group.members.map((m) => m._id.toString());
+    const memberIds = [...group.members, ...group.formerMembers].map((m) => m._id.toString());
     const net = computeNetBalances(expenses, memberIds);
     const settlements = simplifyDebts(net);
 

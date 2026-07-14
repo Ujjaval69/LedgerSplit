@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Stamp, X, ArrowRight, Receipt, Trash2, UserPlus, ArrowLeft, Pencil, Search, Download, Printer } from "lucide-react";
+import { Plus, Stamp, X, ArrowRight, Receipt, Trash2, UserPlus, ArrowLeft, Pencil, Search, Download, Printer, Archive } from "lucide-react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
@@ -90,6 +90,28 @@ export default function GroupDetail() {
     );
   }
 
+  async function toggleArchive() {
+    const actionText = group.isArchived ? "unarchive" : "archive";
+    showConfirm(
+      `${actionText.charAt(0).toUpperCase() + actionText.slice(1)} Ledger`,
+      `Are you sure you want to ${actionText} this ledger group? ${
+        group.isArchived 
+          ? "It will show up in active ledgers again." 
+          : "It will be hidden from your active dashboard list."
+      }`,
+      async () => {
+        try {
+          await api.patch(`/groups/${id}/archive`);
+          window.dispatchEvent(new Event("groupCreated")); // reload sidebar!
+          load();
+        } catch (err) {
+          alert(err.response?.data?.message || "Could not toggle archive status");
+        }
+      },
+      "success"
+    );
+  }
+
   async function removeMember(memberId, memberName) {
     showConfirm(
       "Remove Member",
@@ -144,7 +166,10 @@ export default function GroupDetail() {
   }
 
   const { group, expenses, balances, settlements } = data;
-  const nameOf = (uid) => group.members.find((m) => m._id === uid)?.name || "Unknown";
+  const nameOf = (uid) =>
+    group.members.find((m) => m._id === uid)?.name ||
+    (group.formerMembers || []).find((m) => m._id === uid)?.name ||
+    "Former Member";
 
   const filteredExpenses = expenses.filter((exp) => {
     const matchSearch =
@@ -237,6 +262,13 @@ export default function GroupDetail() {
                 className="flex items-center justify-center gap-2 bg-brand text-white px-4 py-2.5 rounded-xl font-semibold text-xs shadow-sm hover:opacity-90 active:scale-95 transition"
               >
                 <Plus size={14} /> Add Expense
+              </button>
+              <button
+                onClick={toggleArchive}
+                className="flex items-center justify-center gap-2 border border-line bg-card text-ink px-4 py-2.5 rounded-xl font-semibold text-xs hover:bg-paper transition"
+                title={group.isArchived ? "Unarchive ledger" : "Archive ledger"}
+              >
+                <Archive size={14} /> {group.isArchived ? "Unarchive" : "Archive"}
               </button>
               <button
                 onClick={deleteGroup}
@@ -471,7 +503,7 @@ export default function GroupDetail() {
       {showSettle && (
         <SettleModal
           settlements={settlements}
-          members={group.members}
+          members={[...group.members, ...(group.formerMembers || [])]}
           nameOf={nameOf}
           onSettle={recordSettlement}
           onClose={() => setShowSettle(false)}
@@ -740,6 +772,7 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
 function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
   const [view, setView] = useState("list");
   const [hoveredNode, setHoveredNode] = useState(null);
+  const [activeSettleDetail, setActiveSettleDetail] = useState(null);
 
   // Position math
   const N = members.length;
@@ -761,18 +794,18 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
       <div
         onClick={(e) => e.stopPropagation()}
         className={`bg-card rounded-2xl p-6 w-full shadow-modal border border-line animate-scaleIn transition-all duration-300 ${
-          view === "graph" ? "max-w-md" : "max-w-sm"
+          view === "graph" || activeSettleDetail ? "max-w-md" : "max-w-sm"
         }`}
       >
         <div className="flex justify-between items-center mb-4">
-          <h3 className="font-sans font-bold text-lg text-ink">Simplified Settlement</h3>
+          <h3 className="font-sans font-bold text-lg text-ink font-sans">Simplified Settlement</h3>
           <button onClick={onClose} className="text-inksoft hover:text-ink transition">
             <X size={18} />
           </button>
         </div>
 
         {/* View Switcher Tabs */}
-        {settlements.length > 0 && (
+        {!activeSettleDetail && settlements.length > 0 && (
           <div className="flex bg-paper rounded-xl p-1 mb-5 border border-line">
             <button
               onClick={() => setView("list")}
@@ -803,6 +836,61 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
               ALL SETTLED
             </div>
           </div>
+        ) : activeSettleDetail ? (
+          /* Custom Settlement Amount Form overlay (supports partial settlements) */
+          <div className="space-y-4 animate-fadeIn text-left pt-2">
+            <div className="bg-paper/50 border border-line rounded-xl p-4 space-y-3.5">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-inksoft">Record Settlement Payment</h4>
+              <div className="flex items-center justify-between text-xs text-ink font-semibold">
+                <span>Paying from:</span>
+                <span className="font-bold text-red-500">{nameOf(activeSettleDetail.from)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-ink font-semibold">
+                <span>Receiving to:</span>
+                <span className="font-bold text-brand">{nameOf(activeSettleDetail.to)}</span>
+              </div>
+              <div className="flex items-center justify-between text-xs text-inksoft font-semibold border-t border-line/60 pt-2.5">
+                <span>Original Debt:</span>
+                <span className="font-mono font-bold text-ink">{rupee(activeSettleDetail.originalAmount)}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft">
+                Payment Amount (₹)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                required
+                autoFocus
+                value={activeSettleDetail.amount}
+                onChange={(e) => setActiveSettleDetail({ ...activeSettleDetail, amount: parseFloat(e.target.value) || 0 })}
+                className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm text-ink font-mono font-bold outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition"
+              />
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setActiveSettleDetail(null)}
+                className="flex-1 py-3 border border-line rounded-xl text-xs font-bold text-inksoft hover:bg-paper transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onSettle(activeSettleDetail.from, activeSettleDetail.to, activeSettleDetail.amount);
+                  setActiveSettleDetail(null);
+                }}
+                disabled={activeSettleDetail.amount <= 0 || activeSettleDetail.amount > activeSettleDetail.originalAmount + 1}
+                className="flex-1 bg-brand text-white py-3 rounded-xl font-bold text-xs hover:opacity-90 active:scale-95 transition disabled:opacity-40"
+              >
+                Confirm Payment
+              </button>
+            </div>
+          </div>
         ) : view === "list" ? (
           <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
             {settlements.map((t, i) => (
@@ -822,7 +910,7 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                 <div className="flex items-center gap-3">
                   <span className="font-mono font-bold text-red-500">{rupee(t.amount)}</span>
                   <button
-                    onClick={() => onSettle(t.from, t.to, t.amount)}
+                    onClick={() => setActiveSettleDetail({ from: t.from, to: t.to, amount: t.amount, originalAmount: t.amount })}
                     className="bg-brand text-white text-[10px] font-bold px-2.5 py-1 rounded-lg hover:opacity-90 active:scale-95 transition"
                   >
                     Settle
@@ -900,7 +988,7 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                     <g
                       key={idx}
                       className="cursor-pointer group/edge"
-                      onClick={() => onSettle(t.from, t.to, t.amount)}
+                      onClick={() => setActiveSettleDetail({ from: t.from, to: t.to, amount: t.amount, originalAmount: t.amount })}
                       style={{ opacity: isEdgeActive ? 1 : 0.15, transition: "all 0.25s ease" }}
                     >
                       {/* Interactive thick hover helper path */}

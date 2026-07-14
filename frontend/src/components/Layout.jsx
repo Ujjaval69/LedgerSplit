@@ -12,13 +12,17 @@ import {
   Moon,
   Bell,
   Search,
-  Users
+  Users,
+  Archive,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 export default function Layout({ children, onNewGroup }) {
   const [groups, setGroups] = useState([]);
+  const [showArchived, setShowArchived] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("ledgersplit_theme");
@@ -170,8 +174,8 @@ export default function Layout({ children, onNewGroup }) {
               )}
             </div>
 
-            <div className="space-y-1">
-              {groups.map((g) => {
+            <div className="space-y-1 mb-4">
+              {groups.filter(g => !g.isArchived).map((g) => {
                 const isGroupActive = g._id === activeGroupId;
                 return (
                   <button
@@ -191,12 +195,48 @@ export default function Layout({ children, onNewGroup }) {
                   </button>
                 );
               })}
-              {groups.length === 0 && (
+              {groups.filter(g => !g.isArchived).length === 0 && (
                 <p className="text-[11px] text-inksoft/60 px-3 py-1.5 italic">
                   No active ledgers yet.
                 </p>
               )}
             </div>
+
+            {/* Collapsible Archived Ledgers */}
+            {groups.filter(g => g.isArchived).length > 0 && (
+              <div className="mt-6 border-t border-line/60 pt-4">
+                <button
+                  onClick={() => setShowArchived(!showArchived)}
+                  className="w-full flex items-center justify-between px-3 text-[10px] uppercase tracking-wider text-inksoft font-bold hover:text-ink transition"
+                >
+                  <span>Archived ({groups.filter(g => g.isArchived).length})</span>
+                  {showArchived ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                </button>
+                {showArchived && (
+                  <div className="space-y-1 mt-2 animate-fadeIn pl-1">
+                    {groups.filter(g => g.isArchived).map((g) => {
+                      const isGroupActive = g._id === activeGroupId;
+                      return (
+                        <button
+                          key={g._id}
+                          onClick={() => goTo(`/groups/${g._id}`)}
+                          className={`w-full flex items-center justify-between py-1.5 px-3 rounded-xl text-xs font-medium transition-colors text-left opacity-60 hover:opacity-100 ${
+                            isGroupActive
+                              ? "bg-brand-soft text-brand font-semibold dark:bg-brand-soft/20 dark:text-brand-mint"
+                              : "text-inksoft hover:bg-paper hover:text-ink"
+                          }`}
+                        >
+                          <span className="truncate flex items-center gap-2">
+                            <Archive size={12} className="shrink-0 text-inksoft" />
+                            <span className="truncate">{g.name}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

@@ -16,6 +16,13 @@ const expenseSchema = new mongoose.Schema(
       type: Map,
       of: Number,
       required: true,
+      validate: {
+        validator: function (v) {
+          const total = [...v.values()].reduce((a, b) => a + b, 0);
+          return Math.abs(total - this.amount) <= 0.05;
+        },
+        message: "The sum of split shares must equal the total expense amount."
+      }
     },
     category: {
       type: String,

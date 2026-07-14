@@ -11,11 +11,12 @@ router.get("/", async (req, res) => {
   try {
     const userIdStr = req.user._id.toString();
 
-    // 1. Get all groups this user belongs to
-    const groups = await Group.find({ members: req.user._id }).populate("members", "name email");
+    // 1. Get all active groups this user belongs to
+    const allGroups = await Group.find({ members: req.user._id }).populate("members", "name email");
+    const groups = allGroups.filter((g) => !g.isArchived);
     const groupIds = groups.map((g) => g._id);
 
-    // If the user belongs to no groups, return empty stats
+    // If the user belongs to no active groups, return empty stats
     if (groupIds.length === 0) {
       return res.json({
         totalExpenses: 0,
@@ -39,7 +40,7 @@ router.get("/", async (req, res) => {
       });
     }
 
-    // 2. Compute You Owe / You Are Owed / Net Balance across groups
+    // 2. Compute You Owe / You Are Owed / Net Balance across active groups
     let youOwe = 0;
     let youAreOwed = 0;
     const memberIdsSet = new Set();
@@ -47,7 +48,7 @@ router.get("/", async (req, res) => {
     const groupBalances = await Promise.all(
       groups.map(async (group) => {
         const expenses = await Expense.find({ group: group._id });
-        const memberIds = group.members.map((m) => {
+        const memberIds = [...group.members, ...(group.formerMembers || [])].map((m) => {
           if (m._id.toString() !== userIdStr) {
             memberIdsSet.add(m._id.toString());
           }
