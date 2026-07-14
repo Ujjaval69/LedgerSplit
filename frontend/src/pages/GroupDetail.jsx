@@ -50,6 +50,7 @@ export default function GroupDetail() {
     if (!window.confirm(`Delete the ledger group "${group?.name}"? This will delete all expenses in this group and cannot be undone.`)) return;
     try {
       await api.delete(`/groups/${id}`);
+      window.dispatchEvent(new Event("groupCreated"));
       navigate("/dashboard");
     } catch (err) {
       alert(err.response?.data?.message || "Could not delete group");

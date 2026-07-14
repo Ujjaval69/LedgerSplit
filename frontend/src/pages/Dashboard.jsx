@@ -454,6 +454,7 @@ function CreateGroupModal({ onClose, onCreated }) {
       }
 
       await api.post("/groups", { name, memberEmails });
+      window.dispatchEvent(new Event("groupCreated"));
       onCreated();
     } catch (err) {
       setError(err.response?.data?.message || "Could not create group");

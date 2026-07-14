@@ -43,7 +43,15 @@ export default function Layout({ children, onNewGroup }) {
   }, [isDark]);
 
   useEffect(() => {
-    api.get("/groups").then((res) => setGroups(res.data)).catch(() => {});
+    const fetchGroups = () => {
+      api.get("/groups").then((res) => setGroups(res.data)).catch(() => {});
+    };
+    fetchGroups();
+    
+    window.addEventListener("groupCreated", fetchGroups);
+    return () => {
+      window.removeEventListener("groupCreated", fetchGroups);
+    };
   }, [activeGroupId]);
 
   useEffect(() => {
