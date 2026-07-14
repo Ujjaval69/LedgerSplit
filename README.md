@@ -1,256 +1,58 @@
-# 💰 LedgerSplit
+# LedgerSplit — Expense Splitter with Debt Simplification
 
-<div align="center">
+A full-stack expense-splitting app (Splitwise-style) for groups — hostel rooms, trips, flatmates — with automatic debt simplification.
 
-### A modern full-stack expense splitting platform with intelligent debt simplification.
-
-Built with **React • Node.js • Express • MongoDB**
-
-Automatically minimizes the number of transactions required to settle shared expenses using a greedy **Min Cash Flow** algorithm.
-
----
-
-🌐 **Live Demo**
+## 🌐 Live Demo
 
 **Frontend:** https://ledgersplit-frontend.vercel.app
 
 **Backend API:** https://ledgersplit.onrender.com
 
-</div>
+---
+
+## Why this project?
+
+Most expense splitters calculate who owes whom.
+
+LedgerSplit goes one step further by simplifying debts. Instead of showing every individual IOU, it computes the minimum number of transactions required to settle an entire group using a greedy **Min Cash Flow** algorithm.
+
+For example, instead of:
+
+```
+A → B
+A → C
+C → D
+D → B
+```
+
+LedgerSplit simplifies it to only the transactions that are actually needed.
 
 ---
 
-# ✨ Features
-
-## 🔐 Authentication
+## Features
 
 - JWT Authentication
-- Secure Password Hashing (bcrypt)
-- Protected Routes
-- Persistent Login
-- Logout
-- Environment Variable Support
-
-> Upcoming
-- Google Login
-- Forgot Password (OTP)
-- Email Verification
+- Create and manage groups
+- Add members by email
+- Add shared expenses
+- Automatic balance calculation
+- Debt simplification (minimum settlements)
+- Responsive UI
+- Dark mode
 
 ---
 
-## 👥 Group Management
+## Tech Stack
 
-- Create Groups
-- Invite Members
-- Add Members by Email
-- View All Groups
-- Group Dashboard
+### Frontend
 
----
-
-## 💸 Expense Management
-
-- Add Shared Expenses
-- Equal Expense Split
-- Percentage Split (Backend Ready)
-- Exact Amount Split (Backend Ready)
-- Delete Expenses
-- Automatic Balance Calculation
-
----
-
-## 💳 Settlement Engine
-
-The core feature of LedgerSplit.
-
-Instead of displaying dozens of unnecessary IOUs, LedgerSplit computes the minimum number of transactions required to settle an entire group.
-
-Example
-
-Before
-
-Alice owes Bob ₹200
-
-Alice owes Charlie ₹300
-
-Bob owes Charlie ₹100
-
-Charlie owes David ₹400
-
-David owes Alice ₹100
-
-↓
-
-After Debt Simplification
-
-Alice → Charlie ₹400
-
-Bob → Charlie ₹100
-
-David → Charlie ₹300
-
-Much fewer transactions.
-
----
-
-# 🚀 Why LedgerSplit?
-
-Many expense splitter projects stop after implementing CRUD operations.
-
-LedgerSplit goes further.
-
-It includes a **Debt Simplification Engine** that transforms multiple overlapping debts into the smallest possible set of settlements.
-
-This makes the application closer to how production apps like Splitwise optimize settlements.
-
----
-
-# 🧠 Debt Simplification Algorithm
-
-Located in
-
-```
-backend/utils/settleUp.js
-```
-
-Algorithm
-
-1. Compute every user's net balance.
-2. Positive balance → creditor.
-3. Negative balance → debtor.
-4. Match the largest creditor with the largest debtor.
-5. Settle as much debt as possible.
-6. Repeat until everyone reaches zero.
-
-Example
-
-```
-Net Balances
-
-Alice    +400
-Bob      -100
-Charlie  -300
-David    +200
-Emma     -200
-```
-
-↓
-
-```
-Transactions
-
-Bob → Alice ₹100
-
-Charlie → Alice ₹300
-
-Emma → David ₹200
-```
-
-Complexity
-
-```
-O(n log n)
-```
-
-Sorting dominates the runtime.
-
-The algorithm guarantees at most **n − 1** settlement transactions.
-
----
-
-# 🏗️ System Architecture
-
-```
-                React (Vite)
-
-                       │
-
-                    Axios
-
-                       │
-
-             Express REST API
-
-                       │
-
-          JWT Authentication
-
-                       │
-
-            Business Logic
-
-                       │
-
-         Debt Simplification
-
-                       │
-
-             MongoDB Atlas
-```
-
----
-
-# 🗂 Project Structure
-
-```
-expense-splitter/
-
-├── backend/
-│
-├── config/
-│   └── db.js
-│
-├── middleware/
-│   └── auth.js
-│
-├── models/
-│   ├── User.js
-│   ├── Group.js
-│   └── Expense.js
-│
-├── routes/
-│   ├── auth.js
-│   ├── groups.js
-│   └── expenses.js
-│
-├── utils/
-│   └── settleUp.js
-│
-└── server.js
-
-------------------------------------------------
-
-frontend/
-
-├── src/
-│
-├── api/
-│
-├── components/
-│
-├── context/
-│
-├── pages/
-│
-├── hooks/
-│
-└── App.jsx
-```
-
----
-
-# 🛠 Tech Stack
-
-## Frontend
-
-- React
-- Vite
+- React (Vite)
+- React Router
 - Tailwind CSS
 - Axios
-- React Router
-- Lucide React
+- lucide-react
 
-## Backend
+### Backend
 
 - Node.js
 - Express.js
@@ -259,7 +61,7 @@ frontend/
 - JWT
 - bcrypt
 
-## Deployment
+### Deployment
 
 - Vercel
 - Render
@@ -267,90 +69,62 @@ frontend/
 
 ---
 
-# 📡 REST APIs
+## Project Structure
 
-## Authentication
-
-| Method | Endpoint |
-|---------|----------|
-| POST | /api/auth/register |
-| POST | /api/auth/login |
-| GET | /api/auth/me |
-
----
-
-## Groups
-
-| Method | Endpoint |
-|---------|----------|
-| GET | /api/groups |
-| POST | /api/groups |
-| GET | /api/groups/:id |
-| POST | /api/groups/:id/members |
-
----
-
-## Expenses
-
-| Method | Endpoint |
-|---------|----------|
-| POST | /api/expenses |
-| DELETE | /api/expenses/:id |
-
----
-
-# 🔒 Security
-
-- JWT Authentication
-- Password Hashing (bcrypt)
-- Protected APIs
-- Environment Variables
-- CORS Configuration
-- Authentication Middleware
-
----
-
-# ⚙️ Local Setup
-
-## Clone Repository
-
-```bash
-git clone <repo-url>
+```text
+expense-splitter/
+├── backend/
+│   ├── config/
+│   ├── middleware/
+│   ├── models/
+│   ├── routes/
+│   ├── utils/
+│   │   └── settleUp.js
+│   └── server.js
+│
+└── frontend/
+    └── src/
 ```
 
 ---
 
-## Backend
+## Debt Simplification Algorithm
+
+The core logic lives in:
+
+```
+backend/utils/settleUp.js
+```
+
+It works by:
+
+1. Calculating each member's net balance.
+2. Separating creditors and debtors.
+3. Repeatedly matching the largest creditor with the largest debtor.
+4. Settling the maximum possible amount each time.
+
+Time Complexity:
+
+```
+O(n log n)
+```
+
+This guarantees at most **n − 1** settlement transactions.
+
+---
+
+## Running Locally
+
+### Backend
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
-```
-
-Update
-
-```
-MONGO_URI=
-JWT_SECRET=
-CLIENT_URL=
-```
-
-Run
-
-```bash
 npm run dev
 ```
 
-Backend
-
-```
-http://localhost:5000
-```
-
----
-
-## Frontend
+### Frontend
 
 ```bash
 cd frontend
@@ -358,89 +132,38 @@ npm install
 npm run dev
 ```
 
-Frontend
+---
 
-```
-http://localhost:5173
-```
+## API Endpoints
+
+| Method | Endpoint |
+|---------|----------|
+| POST | /api/auth/register |
+| POST | /api/auth/login |
+| GET | /api/auth/me |
+| GET | /api/groups |
+| POST | /api/groups |
+| GET | /api/groups/:id |
+| POST | /api/groups/:id/members |
+| POST | /api/expenses |
+| DELETE | /api/expenses/:id |
 
 ---
 
-# 📸 Screenshots
+## Future Improvements
 
-> Add screenshots here.
-
-- Login Page
-- Dashboard
-- Group Details
-- Add Expense
-- Dark Mode
-- Mobile View
-
----
-
-# 🛣 Roadmap
-
-## Completed
-
-- JWT Authentication
-- Expense Splitting
-- Group Management
-- Debt Simplification
-- Settlements
-- Responsive UI
-- Dark Mode
-
-## In Progress
-
-- Dashboard Analytics
-- Activity History
-- Expense Categories
-
-## Planned
-
-- Google Authentication
-- Forgot Password
-- Email Verification
+- Expense categories
+- Dashboard analytics
+- Activity history
+- Forgot password (OTP)
+- Email verification
+- Google Sign-In
 - Charts
-- Notifications
-- Recurring Expenses
 
 ---
 
-# 💡 Interview Highlights
+## Interview Talking Point
 
-This project demonstrates
+The interesting part of LedgerSplit isn't the CRUD functionality.
 
-- REST API Design
-- Authentication & Authorization
-- MongoDB Schema Design
-- State Management
-- Deployment
-- Algorithm Design
-- Time Complexity Analysis
-- Production Environment Configuration
-- Secure Password Storage
-- Responsive Frontend Development
-
-Interview Question
-
-> Why not simply show every IOU?
-
-Because that creates unnecessary transactions.
-
-LedgerSplit computes each member's net balance and minimizes settlements using a greedy Min Cash Flow algorithm, reducing the transaction count to at most **n − 1**, making settlements significantly easier for users.
-
----
-
-# 👨‍💻 Author
-
-**Ujjaval Goyal**
-
-B.E. Computer Science Engineering
-
-Built to demonstrate full-stack development, REST API design, authentication, deployment, and algorithmic problem solving.
-
----
-
-## ⭐ If you found this project interesting, consider giving it a star.
+The project focuses on minimizing settlement transactions using a greedy debt simplification algorithm, making group payments significantly easier than a naïve pairwise debt calculation.
