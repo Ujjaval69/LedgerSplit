@@ -1,71 +1,356 @@
-# LedgerSplit — Expense Splitter with Debt Simplification
+# 💰 LedgerSplit
 
-A full-stack expense-splitting app (Splitwise-style) for groups — hostel rooms, trips,
-flatmates — with one feature most clones skip: **automatic debt simplification**.
-Instead of showing every individual IOU, LedgerSplit computes the *minimum number
-of transactions* needed to settle a whole group using a greedy graph algorithm.
+<div align="center">
 
-## Why this project is more than a CRUD app
+### A modern full-stack expense splitting platform with intelligent debt simplification.
 
-Anyone can build "add expense, split equally, show balances." The interesting part —
-and the part worth talking about in an interview — is `backend/utils/settleUp.js`:
+Built with **React • Node.js • Express • MongoDB**
 
-- Computes each member's **net balance** across every expense in a group.
-- Runs a **greedy min-cash-flow algorithm**: repeatedly matches the largest creditor
-  with the largest debtor and settles as much of that pair as possible.
-- Guarantees at most `n - 1` transactions for `n` group members, instead of the
-  potentially dozens of pairwise IOUs a naive implementation would produce.
-- O(n log n) — dominated by the sort.
+Automatically minimizes the number of transactions required to settle shared expenses using a greedy **Min Cash Flow** algorithm.
 
-Example: 5 people, net balances `{A: +400, B: -100, C: -300, D: +200, E: -200}` →
-resolves to just 4 transactions instead of a tangle of individual debts.
+---
 
-## Tech stack
+🌐 **Live Demo**
 
-- **Backend:** Node.js, Express, MongoDB (Mongoose), JWT auth, bcrypt
-- **Frontend:** React (Vite), React Router, Tailwind CSS, Axios, lucide-react
-- **Deploy targets:** Render/Railway (backend) + Vercel (frontend), MongoDB Atlas (DB)
+**Frontend:** https://ledgersplit-frontend.vercel.app
 
-## Project structure
+**Backend API:** https://ledgersplit.onrender.com
+
+</div>
+
+---
+
+# ✨ Features
+
+## 🔐 Authentication
+
+- JWT Authentication
+- Secure Password Hashing (bcrypt)
+- Protected Routes
+- Persistent Login
+- Logout
+- Environment Variable Support
+
+> Upcoming
+- Google Login
+- Forgot Password (OTP)
+- Email Verification
+
+---
+
+## 👥 Group Management
+
+- Create Groups
+- Invite Members
+- Add Members by Email
+- View All Groups
+- Group Dashboard
+
+---
+
+## 💸 Expense Management
+
+- Add Shared Expenses
+- Equal Expense Split
+- Percentage Split (Backend Ready)
+- Exact Amount Split (Backend Ready)
+- Delete Expenses
+- Automatic Balance Calculation
+
+---
+
+## 💳 Settlement Engine
+
+The core feature of LedgerSplit.
+
+Instead of displaying dozens of unnecessary IOUs, LedgerSplit computes the minimum number of transactions required to settle an entire group.
+
+Example
+
+Before
+
+Alice owes Bob ₹200
+
+Alice owes Charlie ₹300
+
+Bob owes Charlie ₹100
+
+Charlie owes David ₹400
+
+David owes Alice ₹100
+
+↓
+
+After Debt Simplification
+
+Alice → Charlie ₹400
+
+Bob → Charlie ₹100
+
+David → Charlie ₹300
+
+Much fewer transactions.
+
+---
+
+# 🚀 Why LedgerSplit?
+
+Many expense splitter projects stop after implementing CRUD operations.
+
+LedgerSplit goes further.
+
+It includes a **Debt Simplification Engine** that transforms multiple overlapping debts into the smallest possible set of settlements.
+
+This makes the application closer to how production apps like Splitwise optimize settlements.
+
+---
+
+# 🧠 Debt Simplification Algorithm
+
+Located in
+
+```
+backend/utils/settleUp.js
+```
+
+Algorithm
+
+1. Compute every user's net balance.
+2. Positive balance → creditor.
+3. Negative balance → debtor.
+4. Match the largest creditor with the largest debtor.
+5. Settle as much debt as possible.
+6. Repeat until everyone reaches zero.
+
+Example
+
+```
+Net Balances
+
+Alice    +400
+Bob      -100
+Charlie  -300
+David    +200
+Emma     -200
+```
+
+↓
+
+```
+Transactions
+
+Bob → Alice ₹100
+
+Charlie → Alice ₹300
+
+Emma → David ₹200
+```
+
+Complexity
+
+```
+O(n log n)
+```
+
+Sorting dominates the runtime.
+
+The algorithm guarantees at most **n − 1** settlement transactions.
+
+---
+
+# 🏗️ System Architecture
+
+```
+                React (Vite)
+
+                       │
+
+                    Axios
+
+                       │
+
+             Express REST API
+
+                       │
+
+          JWT Authentication
+
+                       │
+
+            Business Logic
+
+                       │
+
+         Debt Simplification
+
+                       │
+
+             MongoDB Atlas
+```
+
+---
+
+# 🗂 Project Structure
 
 ```
 expense-splitter/
+
 ├── backend/
-│   ├── config/db.js          # MongoDB connection
-│   ├── models/                # User, Group, Expense schemas
-│   ├── middleware/auth.js     # JWT verification middleware
-│   ├── utils/settleUp.js      # The core algorithm — read this first
-│   ├── routes/                # auth, groups, expenses REST endpoints
-│   └── server.js
-└── frontend/
-    └── src/
-        ├── api/client.js       # Axios instance with auth interceptor
-        ├── context/AuthContext.jsx
-        ├── pages/              # Login, Register, Dashboard, GroupDetail
-        └── App.jsx
+│
+├── config/
+│   └── db.js
+│
+├── middleware/
+│   └── auth.js
+│
+├── models/
+│   ├── User.js
+│   ├── Group.js
+│   └── Expense.js
+│
+├── routes/
+│   ├── auth.js
+│   ├── groups.js
+│   └── expenses.js
+│
+├── utils/
+│   └── settleUp.js
+│
+└── server.js
+
+------------------------------------------------
+
+frontend/
+
+├── src/
+│
+├── api/
+│
+├── components/
+│
+├── context/
+│
+├── pages/
+│
+├── hooks/
+│
+└── App.jsx
 ```
 
-## Running it locally
+---
 
-### 1. Backend
+# 🛠 Tech Stack
+
+## Frontend
+
+- React
+- Vite
+- Tailwind CSS
+- Axios
+- React Router
+- Lucide React
+
+## Backend
+
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT
+- bcrypt
+
+## Deployment
+
+- Vercel
+- Render
+- MongoDB Atlas
+
+---
+
+# 📡 REST APIs
+
+## Authentication
+
+| Method | Endpoint |
+|---------|----------|
+| POST | /api/auth/register |
+| POST | /api/auth/login |
+| GET | /api/auth/me |
+
+---
+
+## Groups
+
+| Method | Endpoint |
+|---------|----------|
+| GET | /api/groups |
+| POST | /api/groups |
+| GET | /api/groups/:id |
+| POST | /api/groups/:id/members |
+
+---
+
+## Expenses
+
+| Method | Endpoint |
+|---------|----------|
+| POST | /api/expenses |
+| DELETE | /api/expenses/:id |
+
+---
+
+# 🔒 Security
+
+- JWT Authentication
+- Password Hashing (bcrypt)
+- Protected APIs
+- Environment Variables
+- CORS Configuration
+- Authentication Middleware
+
+---
+
+# ⚙️ Local Setup
+
+## Clone Repository
+
+```bash
+git clone <repo-url>
+```
+
+---
+
+## Backend
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
-# edit .env: paste your MongoDB Atlas connection string + a random JWT_SECRET
+```
+
+Update
+
+```
+MONGO_URI=
+JWT_SECRET=
+CLIENT_URL=
+```
+
+Run
+
+```bash
 npm run dev
 ```
 
-Backend runs on `http://localhost:5000`.
+Backend
 
-**Getting a free MongoDB Atlas connection string** (takes ~5 min):
-1. Sign up at mongodb.com/cloud/atlas (free tier, no card needed for M0 cluster)
-2. Create a free cluster → Database Access → add a user with a password
-3. Network Access → allow access from anywhere (0.0.0.0/0) for development
-4. Connect → "Drivers" → copy the connection string into `MONGO_URI` in `.env`
+```
+http://localhost:5000
+```
 
-### 2. Frontend
+---
+
+## Frontend
 
 ```bash
 cd frontend
@@ -73,50 +358,89 @@ npm install
 npm run dev
 ```
 
-Frontend runs on `http://localhost:5173`.
+Frontend
 
-## API endpoints
+```
+http://localhost:5173
+```
 
-| Method | Route                     | Description                              |
-|--------|----------------------------|-------------------------------------------|
-| POST   | /api/auth/register         | Create account                            |
-| POST   | /api/auth/login            | Log in, returns JWT                       |
-| GET    | /api/auth/me                | Current user (requires token)             |
-| GET    | /api/groups                 | List your groups                          |
-| POST   | /api/groups                 | Create a group, invite by email           |
-| GET    | /api/groups/:id             | Group + expenses + balances + settlements |
-| POST   | /api/groups/:id/members     | Add a member                              |
-| POST   | /api/expenses                | Add an expense (equal/percentage/exact)   |
-| DELETE | /api/expenses/:id            | Remove an expense                         |
+---
 
-## Deploying (free tier, good enough for a resume demo link)
+# 📸 Screenshots
 
-1. **Database:** MongoDB Atlas (free M0 cluster).
-2. **Backend:** push `backend/` to its own GitHub repo (or use root dir setting) →
-   deploy on Render.com as a Web Service → set env vars from `.env.example`.
-3. **Frontend:** deploy `frontend/` on Vercel → set `VITE_API_URL` to your Render
-   backend URL + `/api`.
+> Add screenshots here.
 
-## Ideas to extend (good for a "future work" section on your resume/README)
+- Login Page
+- Dashboard
+- Group Details
+- Add Expense
+- Dark Mode
+- Mobile View
 
-- Percentage/exact splits already exist in the backend (`splitType`) — wire up the
-  UI for them (currently the UI only sends equal splits).
-- Recurring expenses (rent, subscriptions).
-- Email/WhatsApp reminder when someone owes money for >7 days.
-- Expense categories + a spending breakdown chart.
-- Real payment integration (Razorpay) instead of manual "mark as settled."
+---
 
-## What to say about this in an interview
+# 🛣 Roadmap
 
-- **"Why not just show every IOU?"** — because with n expenses among m people you
-  can end up with far more transactions than necessary; the greedy algorithm
-  bounds it to at most `m-1`.
-- **"Why greedy, why not an exact optimal algorithm?"** — minimizing transaction
-  count exactly is a harder combinatorial problem; the greedy largest-creditor/
-  largest-debtor match is the standard practical approach and is provably within
-  a small bound of optimal for this problem shape — good tradeoff of simplicity
-  vs. correctness for a real app.
-- **"How do you keep balances consistent?"** — the `shares` map is computed and
-  stored per expense at write-time, so balance calculation later is just a sum
-  reduction — no re-deriving split logic across split types when reading.
-# LedgerSplit
+## Completed
+
+- JWT Authentication
+- Expense Splitting
+- Group Management
+- Debt Simplification
+- Settlements
+- Responsive UI
+- Dark Mode
+
+## In Progress
+
+- Dashboard Analytics
+- Activity History
+- Expense Categories
+
+## Planned
+
+- Google Authentication
+- Forgot Password
+- Email Verification
+- Charts
+- Notifications
+- Recurring Expenses
+
+---
+
+# 💡 Interview Highlights
+
+This project demonstrates
+
+- REST API Design
+- Authentication & Authorization
+- MongoDB Schema Design
+- State Management
+- Deployment
+- Algorithm Design
+- Time Complexity Analysis
+- Production Environment Configuration
+- Secure Password Storage
+- Responsive Frontend Development
+
+Interview Question
+
+> Why not simply show every IOU?
+
+Because that creates unnecessary transactions.
+
+LedgerSplit computes each member's net balance and minimizes settlements using a greedy Min Cash Flow algorithm, reducing the transaction count to at most **n − 1**, making settlements significantly easier for users.
+
+---
+
+# 👨‍💻 Author
+
+**Ujjaval Goyal**
+
+B.E. Computer Science Engineering
+
+Built to demonstrate full-stack development, REST API design, authentication, deployment, and algorithmic problem solving.
+
+---
+
+## ⭐ If you found this project interesting, consider giving it a star.
