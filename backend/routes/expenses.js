@@ -48,7 +48,7 @@ function resolveShares({ amount, splitAmong, splitType, splitDetails }) {
 // POST /api/expenses - add an expense to a group
 router.post("/", async (req, res) => {
   try {
-    const { groupId, description, amount, paidBy, splitAmong, splitType = "equal", splitDetails, category } = req.body;
+    const { groupId, description, amount, paidBy, splitAmong, splitType = "equal", splitDetails, category, date, receiptUrl } = req.body;
 
     if (!groupId || !description || !amount || !paidBy || !splitAmong?.length) {
       return res.status(400).json({ message: "Missing required expense fields" });
@@ -72,6 +72,8 @@ router.post("/", async (req, res) => {
       splitAmong,
       splitType,
       shares,
+      date: date || new Date(),
+      receiptUrl: receiptUrl || "",
       category: category || "Other",
       createdBy: req.user._id,
     });
@@ -117,7 +119,7 @@ router.delete("/:id", async (req, res) => {
 // PUT /api/expenses/:id - edit an expense
 router.put("/:id", async (req, res) => {
   try {
-    const { description, amount, paidBy, splitAmong, splitType = "equal", splitDetails, category } = req.body;
+    const { description, amount, paidBy, splitAmong, splitType = "equal", splitDetails, category, date, receiptUrl } = req.body;
     const expense = await Expense.findById(req.params.id);
     if (!expense) return res.status(404).json({ message: "Expense not found" });
 
@@ -133,6 +135,8 @@ router.put("/:id", async (req, res) => {
     expense.splitAmong = splitAmong || expense.splitAmong;
     expense.splitType = splitType || expense.splitType;
     expense.category = category || expense.category;
+    expense.date = date || expense.date;
+    expense.receiptUrl = receiptUrl !== undefined ? receiptUrl : expense.receiptUrl;
 
     if (amount !== undefined || splitAmong || splitType || splitDetails) {
       const activeSplitAmong = splitAmong || expense.splitAmong;

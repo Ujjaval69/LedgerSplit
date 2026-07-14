@@ -34,7 +34,7 @@ router.get("/", async (req, res) => {
 // POST /api/groups - create a group. memberEmails: array of emails to invite
 router.post("/", async (req, res) => {
   try {
-    const { name, memberEmails = [] } = req.body;
+    const { name, memberEmails = [], currency = "INR" } = req.body;
     if (!name) return res.status(400).json({ message: "Group name is required" });
 
     const invited = await User.find({ email: { $in: memberEmails.map((e) => e.toLowerCase()) } });
@@ -45,6 +45,7 @@ router.post("/", async (req, res) => {
       name,
       createdBy: req.user._id,
       members: Array.from(memberIds),
+      currency
     });
 
     // Create activity
@@ -69,7 +70,7 @@ router.get("/:id", async (req, res) => {
     .populate("formerMembers", "name email");
   if (!group) return res.status(404).json({ message: "Group not found" });
 
-  const expenses = await Expense.find({ group: group._id }).populate("paidBy", "name email").sort({ createdAt: -1 });
+  const expenses = await Expense.find({ group: group._id }).populate("paidBy", "name email").sort({ date: -1, createdAt: -1 });
 
   const memberIds = group.members.map((m) => m._id.toString());
   const net = computeNetBalances(expenses, memberIds);
@@ -166,7 +167,7 @@ router.delete("/:id/members/:memberId", async (req, res) => {
     const populated = await group.populate("members", "name email").then(g => g.populate("formerMembers", "name email"));
     
     // Recalculate settlements/balances (former members still belong to calculations of past expenses!)
-    const expenses = await Expense.find({ group: group._id }).populate("paidBy", "name email").sort({ createdAt: -1 });
+    const expenses = await Expense.find({ group: group._id }).populate("paidBy", "name email").sort({ date: -1, createdAt: -1 });
     const memberIds = [...group.members, ...group.formerMembers].map((m) => m._id.toString());
     const net = computeNetBalances(expenses, memberIds);
     const settlements = simplifyDebts(net);
@@ -174,6 +175,158 @@ router.delete("/:id/members/:memberId", async (req, res) => {
     res.json({ group: populated, expenses, balances: net, settlements });
   } catch (err) {
     res.status(500).json({ message: "Could not remove member", error: err.message });
+  }
+});
+
+// POST /api/groups/seed-demo - seed Goa Trip demo data
+router.post("/seed-demo", async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // 1. Create or Find Mock Users
+    const demoMembers = [
+      { name: "Rahul Sharma", email: "rahul.demo@ledgersplit.com" },
+      { name: "Priya Patel", email: "priya.demo@ledgersplit.com" },
+      { name: "Amit Verma", email: "amit.demo@ledgersplit.com" },
+      { name: "Sneha Reddy", email: "sneha.demo@ledgersplit.com" }
+    ];
+
+    const seededIds = [];
+    for (const member of demoMembers) {
+      let userDoc = await User.findOne({ email: member.email });
+      if (!userDoc) {
+        userDoc = await User.create({
+          name: member.name,
+          email: member.email,
+          password: "demopassword123",
+          isVerified: true
+        });
+      }
+      seededIds.push(userDoc._id);
+    }
+
+    const [rahulId, priyaId, amitId, snehaId] = seededIds;
+    const allMembers = [userId, ...seededIds];
+
+    // 2. Create the Group
+    const group = await Group.create({
+      name: "Trip to Goa 🌴",
+      createdBy: userId,
+      members: allMembers
+    });
+
+    // 3. Create Expenses
+    const expensesToSeed = [
+      {
+        description: "Goa Villa Accommodation",
+        amount: 35000,
+        paidBy: rahulId,
+        splitAmong: allMembers,
+        splitType: "equal",
+        category: "Bills",
+        shares: {
+          [userId.toString()]: 7000,
+          [rahulId.toString()]: 7000,
+          [priyaId.toString()]: 7000,
+          [amitId.toString()]: 7000,
+          [snehaId.toString()]: 7000
+        }
+      },
+      {
+        description: "Flight Tickets Booking",
+        amount: 25000,
+        paidBy: userId,
+        splitAmong: allMembers,
+        splitType: "equal",
+        category: "Travel",
+        shares: {
+          [userId.toString()]: 5000,
+          [rahulId.toString()]: 5000,
+          [priyaId.toString()]: 5000,
+          [amitId.toString()]: 5000,
+          [snehaId.toString()]: 5000
+        }
+      },
+      {
+        description: "Scuba Diving & Watersports",
+        amount: 12000,
+        paidBy: priyaId,
+        splitAmong: [userId, rahulId, priyaId],
+        splitType: "equal",
+        category: "Entertainment",
+        shares: {
+          [userId.toString()]: 4000,
+          [rahulId.toString()]: 4000,
+          [priyaId.toString()]: 4000
+        }
+      },
+      {
+        description: "Beach Dinner at Curlies",
+        amount: 5000,
+        paidBy: amitId,
+        splitAmong: allMembers,
+        splitType: "equal",
+        category: "Food",
+        shares: {
+          [userId.toString()]: 1000,
+          [rahulId.toString()]: 1000,
+          [priyaId.toString()]: 1000,
+          [amitId.toString()]: 1000,
+          [snehaId.toString()]: 1000
+        }
+      },
+      {
+        description: "Scooter Rentals (3 days)",
+        amount: 3000,
+        paidBy: snehaId,
+        splitAmong: [rahulId, amitId, snehaId],
+        splitType: "equal",
+        category: "Travel",
+        shares: {
+          [rahulId.toString()]: 1000,
+          [amitId.toString()]: 1000,
+          [snehaId.toString()]: 1000
+        }
+      },
+      {
+        description: "Late Night Beach Drinks",
+        amount: 2000,
+        paidBy: userId,
+        splitAmong: [userId, snehaId],
+        splitType: "equal",
+        category: "Food",
+        shares: {
+          [userId.toString()]: 1000,
+          [snehaId.toString()]: 1000
+        }
+      }
+    ];
+
+    for (const exp of expensesToSeed) {
+      await Expense.create({
+        group: group._id,
+        description: exp.description,
+        amount: exp.amount,
+        paidBy: exp.paidBy,
+        splitAmong: exp.splitAmong,
+        splitType: exp.splitType,
+        category: exp.category,
+        shares: exp.shares,
+        createdBy: userId
+      });
+    }
+
+    // 4. Create Activity Logs
+    await Activity.create({
+      user: userId,
+      group: group._id,
+      action: "add_expense",
+      message: `${req.user.name} created the ledger book "Trip to Goa 🌴" with 4 seeded members.`
+    });
+
+    res.json({ message: "Demo data seeded successfully", group });
+  } catch (err) {
+    res.status(500).json({ message: "Could not seed demo data", error: err.message });
   }
 });
 

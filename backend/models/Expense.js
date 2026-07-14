@@ -24,6 +24,8 @@ const expenseSchema = new mongoose.Schema(
         message: "The sum of split shares must equal the total expense amount."
       }
     },
+    date: { type: Date, default: Date.now },
+    receiptUrl: { type: String, default: "" },
     category: {
       type: String,
       enum: ["Food", "Travel", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"],

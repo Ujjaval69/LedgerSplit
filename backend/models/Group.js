@@ -7,6 +7,7 @@ const groupSchema = new mongoose.Schema(
     members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }],
     formerMembers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     isArchived: { type: Boolean, default: false },
+    currency: { type: String, default: "INR" },
   },
   { timestamps: true }
 );

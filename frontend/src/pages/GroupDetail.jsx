@@ -3,10 +3,19 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Plus, Stamp, X, ArrowRight, Receipt, Trash2, UserPlus, ArrowLeft, Pencil, Search, Download, Printer, Archive } from "lucide-react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import Layout from "../components/Layout";
 
-function rupee(n) {
-  return "₹" + Math.round(n).toLocaleString("en-IN");
+const CURRENCY_SYMBOLS = {
+  INR: "₹",
+  USD: "$",
+  EUR: "€",
+  GBP: "£"
+};
+
+function formatCurrency(n, curr = "INR") {
+  const symbol = CURRENCY_SYMBOLS[curr] || "₹";
+  return symbol + Math.round(n).toLocaleString(curr === "INR" ? "en-IN" : "en-US");
 }
 
 function initialsOf(name = "?") {
@@ -18,11 +27,47 @@ function initialsOf(name = "?") {
     .toUpperCase();
 }
 
+const MEMBER_GRADIENTS = [
+  "from-emerald-400 to-teal-500",
+  "from-blue-400 to-indigo-500",
+  "from-orange-400 to-red-500",
+  "from-purple-400 to-pink-500",
+  "from-yellow-400 to-amber-500",
+  "from-cyan-400 to-blue-500",
+  "from-rose-400 to-red-500",
+  "from-fuchsia-400 to-purple-500"
+];
+
+function memberColorFor(id = "") {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % MEMBER_GRADIENTS.length;
+  return MEMBER_GRADIENTS[hash];
+}
+
+const MEMBER_COLORS_HEX = [
+  "#10b981", // Emerald
+  "#3b82f6", // Blue
+  "#f97316", // Orange
+  "#8b5cf6", // Purple
+  "#eab308", // Yellow
+  "#06b6d4", // Cyan
+  "#f43f5e", // Rose
+  "#d946ef"  // Fuchsia
+];
+
+function memberColorHexFor(id = "") {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % MEMBER_COLORS_HEX.length;
+  return MEMBER_COLORS_HEX[hash];
+}
+
 export default function GroupDetail() {
   const { id } = useParams();
   const { user } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [activeReceiptPreview, setActiveReceiptPreview] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showSettle, setShowSettle] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
@@ -66,9 +111,10 @@ export default function GroupDetail() {
       async () => {
         try {
           await api.delete(`/expenses/${expenseId}`);
+          toast("Expense deleted successfully!", "success");
           load();
         } catch (err) {
-          alert(err.response?.data?.message || "Could not delete expense");
+          toast(err.response?.data?.message || "Could not delete expense", "error");
         }
       }
     );
@@ -82,9 +128,10 @@ export default function GroupDetail() {
         try {
           await api.delete(`/groups/${id}`);
           window.dispatchEvent(new Event("groupCreated"));
+          toast("Ledger group deleted successfully!", "success");
           navigate("/dashboard");
         } catch (err) {
-          alert(err.response?.data?.message || "Could not delete group");
+          toast(err.response?.data?.message || "Could not delete group", "error");
         }
       }
     );
@@ -103,9 +150,10 @@ export default function GroupDetail() {
         try {
           await api.patch(`/groups/${id}/archive`);
           window.dispatchEvent(new Event("groupCreated")); // reload sidebar!
+          toast(`Ledger successfully ${group.isArchived ? "unarchived" : "archived"}!`, "success");
           load();
         } catch (err) {
-          alert(err.response?.data?.message || "Could not toggle archive status");
+          toast(err.response?.data?.message || "Could not toggle archive status", "error");
         }
       },
       "success"
@@ -120,8 +168,9 @@ export default function GroupDetail() {
         try {
           const res = await api.delete(`/groups/${id}/members/${memberId}`);
           setData(res.data);
+          toast(`${memberName} removed from ledger.`, "success");
         } catch (err) {
-          alert(err.response?.data?.message || "Could not remove member");
+          toast(err.response?.data?.message || "Could not remove member", "error");
         }
       }
     );
@@ -130,9 +179,10 @@ export default function GroupDetail() {
   async function recordSettlement(fromId, toId, amount) {
     const fromName = nameOf(fromId);
     const toName = nameOf(toId);
+    const symbol = CURRENCY_SYMBOLS[group?.currency || "INR"] || "₹";
     showConfirm(
       "Record Settlement",
-      `Do you want to record a settlement payment of ₹${amount} from ${fromName} to ${toName}? This will reset their mutual balance.`,
+      `Do you want to record a settlement payment of ${symbol}${amount} from ${fromName} to ${toName}? This will reset their mutual balance.`,
       async () => {
         try {
           await api.post("/expenses", {
@@ -145,9 +195,10 @@ export default function GroupDetail() {
             category: "Other"
           });
           setShowSettle(false);
+          toast(`Recorded settlement of ${symbol}${amount} successfully!`, "success");
           load();
         } catch (err) {
-          alert(err.response?.data?.message || "Could not record settlement");
+          toast(err.response?.data?.message || "Could not record settlement", "error");
         }
       },
       "success"
@@ -157,15 +208,52 @@ export default function GroupDetail() {
   if (!data) {
     return (
       <Layout>
-        <div className="flex flex-col items-center justify-center min-h-[50vh] animate-fadeIn">
-          <div className="w-10 h-10 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
-          <p className="mt-4 text-xs font-semibold text-inksoft">Loading ledger details...</p>
-        </div>
+        <main className="w-full px-6 py-8 sm:px-8 sm:py-10 animate-pulse space-y-8">
+          {/* Header Skeleton */}
+          <div className="space-y-3">
+            <div className="h-3 bg-paper dark:bg-paper/20 rounded w-24" />
+            <div className="h-8 bg-paper dark:bg-paper/20 rounded w-48" />
+          </div>
+
+          {/* Members Balances Grid Skeleton */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-card border border-line rounded-2xl p-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-paper dark:bg-paper/20" />
+                  <div className="h-2.5 bg-paper dark:bg-paper/20 rounded w-16" />
+                </div>
+                <div className="h-5 bg-paper dark:bg-paper/20 rounded w-20" />
+                <div className="h-2 bg-paper dark:bg-paper/20 rounded w-12" />
+              </div>
+            ))}
+          </div>
+
+          {/* Table Skeleton */}
+          <div className="bg-card border border-line rounded-2xl overflow-hidden shadow-sm">
+            <div className="px-5 py-4 border-b border-line">
+              <div className="h-3.5 bg-paper dark:bg-paper/20 rounded w-32" />
+            </div>
+            <div className="p-5 space-y-4">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="flex justify-between items-center border-b border-line/60 pb-3">
+                  <div className="flex gap-4 items-center">
+                    <div className="h-3 bg-paper dark:bg-paper/20 rounded w-12" />
+                    <div className="h-3.5 bg-paper dark:bg-paper/20 rounded w-32" />
+                  </div>
+                  <div className="h-3.5 bg-paper dark:bg-paper/20 rounded w-16" />
+                  <div className="h-3.5 bg-paper dark:bg-paper/20 rounded w-14" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
       </Layout>
     );
   }
 
   const { group, expenses, balances, settlements } = data;
+  const rupee = (n) => formatCurrency(n, group?.currency || "INR");
   const nameOf = (uid) =>
     group.members.find((m) => m._id === uid)?.name ||
     (group.formerMembers || []).find((m) => m._id === uid)?.name ||
@@ -186,7 +274,7 @@ export default function GroupDetail() {
   function exportToCSV() {
     const csvHeaders = ["Date", "Description", "Category", "Paid By", "Amount", "Split Ways", "Split Members"];
     const csvRows = expenses.map((exp) => {
-      const date = new Date(exp.createdAt).toLocaleDateString("en-IN");
+      const date = new Date(exp.date || exp.createdAt).toLocaleDateString("en-IN");
       const desc = `"${exp.description.replace(/"/g, '""')}"`;
       const cat = exp.category || "Other";
       const paid = exp.paidBy.name;
@@ -305,13 +393,7 @@ export default function GroupDetail() {
                 )}
                 <div className="flex items-center gap-3 mb-3">
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm ${
-                      isCredit 
-                        ? "bg-brand" 
-                        : isDebt 
-                          ? "bg-red-500" 
-                          : "bg-inksoft/30 dark:bg-inksoft/10 text-ink"
-                    }`}
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-extrabold text-white shrink-0 shadow-sm bg-gradient-to-br ${memberColorFor(m._id)}`}
                   >
                     {initialsOf(m.name)}
                   </div>
@@ -433,7 +515,7 @@ export default function GroupDetail() {
                       className="hover:bg-paper/20 transition-colors group text-xs text-ink"
                     >
                       <td className="px-6 py-4 text-inksoft font-medium">
-                        {new Date(exp.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                        {new Date(exp.date || exp.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2">
@@ -441,6 +523,15 @@ export default function GroupDetail() {
                           <span className="px-2 py-0.5 text-[9px] font-extrabold rounded-full bg-paper dark:bg-paper/10 text-brand-mint/90 border border-line uppercase tracking-wider">
                             {exp.category || "Other"}
                           </span>
+                          {exp.receiptUrl && (
+                            <button
+                              onClick={() => setActiveReceiptPreview(exp.receiptUrl)}
+                              className="p-1 rounded bg-brand-soft text-brand dark:bg-brand-soft/20 dark:text-brand-mint hover:opacity-90 transition"
+                              title="View Receipt"
+                            >
+                              <Receipt size={10} />
+                            </button>
+                          )}
                         </div>
                         <div className="text-[10px] text-inksoft mt-0.5">split {exp.splitAmong.length} ways</div>
                       </td>
@@ -485,6 +576,7 @@ export default function GroupDetail() {
       {(showAdd || editingExpense) && (
         <AddExpenseModal
           group={group}
+          expenses={expenses}
           currentUserId={user._id}
           expenseToEdit={editingExpense}
           onClose={() => {
@@ -530,12 +622,156 @@ export default function GroupDetail() {
         onConfirm={confirmState.onConfirm}
         onCancel={() => setConfirmState((prev) => ({ ...prev, isOpen: false }))}
       />
+
+      {/* Receipt Image Preview Modal */}
+      {activeReceiptPreview && (
+        <div 
+          className="fixed inset-0 bg-ink/75 flex items-center justify-center z-[99999] p-4 animate-fadeIn cursor-zoom-out"
+          onClick={() => setActiveReceiptPreview(null)}
+        >
+          <div 
+            className="bg-card border border-line rounded-2xl p-5 max-w-sm w-full animate-scaleIn space-y-4 shadow-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-inksoft">Receipt Invoice Bill</h4>
+              <button 
+                onClick={() => setActiveReceiptPreview(null)} 
+                className="text-inksoft hover:text-ink transition"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <img 
+              src={activeReceiptPreview} 
+              alt="Receipt Bill Invoice" 
+              className="w-full h-auto rounded-xl border border-line select-none" 
+            />
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
 
-function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded }) {
+function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClose, onAdded }) {
   const [description, setDescription] = useState(expenseToEdit ? expenseToEdit.description : "");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const parseCSV = (text) => {
+    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+    if (lines.length <= 1) return [];
+    const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
+    
+    return lines.slice(1).map(line => {
+      const values = [];
+      let current = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(current.trim());
+          current = "";
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim());
+      
+      const row = {};
+      headers.forEach((h, idx) => {
+        row[h] = values[idx];
+      });
+      return row;
+    });
+  };
+
+  const handleCSVImport = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const text = evt.target.result;
+        const rows = parseCSV(text);
+        if (rows.length === 0) {
+          toast("No valid rows found in CSV file.", "error");
+          return;
+        }
+        
+        setSaving(true);
+        let successCount = 0;
+        for (const row of rows) {
+          const description = row.description || row.desc || "Imported Expense";
+          const amount = parseFloat(row.amount || row.price) || 0;
+          if (amount <= 0) continue;
+          
+          let paidById = currentUserId;
+          if (row.paidby || row.paid) {
+            const term = (row.paidby || row.paid).toLowerCase().trim();
+            const found = group.members.find(
+              (m) => m.name.toLowerCase().includes(term) || m.email.toLowerCase().includes(term)
+            );
+            if (found) paidById = found._id;
+          }
+          
+          const categories = ["Food", "Travel", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"];
+          let cat = "Other";
+          if (row.category) {
+            const matched = categories.find((c) => c.toLowerCase() === row.category.trim().toLowerCase());
+            if (matched) cat = matched;
+          }
+          
+          let transactionDate = new Date();
+          if (row.date) {
+            const parsed = new Date(row.date);
+            if (!isNaN(parsed.getTime())) transactionDate = parsed;
+          }
+          
+          await api.post("/expenses", {
+            groupId: group._id,
+            description,
+            amount,
+            paidBy: paidById,
+            splitAmong: group.members.map((m) => m._id),
+            splitType: "equal",
+            category: cat,
+            date: transactionDate
+          });
+          successCount++;
+        }
+        toast(`Successfully imported ${successCount} expenses from CSV!`, "success");
+        onAdded();
+      } catch (err) {
+        toast("Error importing CSV file.", "error");
+      } finally {
+        setSaving(false);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const uniqueDescriptions = Array.from(
+    new Set((expenses || []).map((e) => e.description.trim()))
+  ).filter(
+    (d) =>
+      d.toLowerCase() !== description.toLowerCase() &&
+      d.toLowerCase().includes(description.toLowerCase())
+  ).slice(0, 4);
+
+  const handleSelectSuggestion = (desc) => {
+    setDescription(desc);
+    const past = (expenses || []).find(
+      (e) => e.description.trim().toLowerCase() === desc.trim().toLowerCase()
+    );
+    if (past && past.category) {
+      setCategory(past.category);
+    }
+    setShowSuggestions(false);
+  };
   const [amount, setAmount] = useState(expenseToEdit ? expenseToEdit.amount : "");
   const [paidBy, setPaidBy] = useState(expenseToEdit ? (expenseToEdit.paidBy._id || expenseToEdit.paidBy) : currentUserId);
   const [splitAmong, setSplitAmong] = useState(expenseToEdit ? expenseToEdit.splitAmong : group.members.map((m) => m._id));
@@ -547,6 +783,13 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
     return {};
   });
   const [category, setCategory] = useState(expenseToEdit ? expenseToEdit.category || "Other" : "Other");
+  const [receiptUrl, setReceiptUrl] = useState(expenseToEdit ? expenseToEdit.receiptUrl || "" : "");
+  const [date, setDate] = useState(() => {
+    if (expenseToEdit && expenseToEdit.date) {
+      return new Date(expenseToEdit.date).toISOString().split("T")[0];
+    }
+    return new Date().toISOString().split("T")[0];
+  });
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -579,6 +822,8 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
         splitAmong,
         splitType,
         category,
+        date,
+        receiptUrl
       };
       if (splitType !== "equal") {
         payload.splitDetails = Object.fromEntries(
@@ -621,35 +866,83 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {!expenseToEdit && (
+            <div className="border border-dashed border-line rounded-xl p-3.5 text-center bg-paper/20 hover:bg-paper/40 transition relative cursor-pointer group/import">
+              <input
+                type="file"
+                accept=".csv"
+                onChange={handleCSVImport}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
+              <div className="text-[10px] text-inksoft font-bold group-hover/import:text-brand transition flex items-center justify-center gap-1.5">
+                <Download size={12} className="rotate-180 text-inksoft group-hover/import:text-brand transition" /> Drop or select a CSV to import multiple expenses
+              </div>
+            </div>
+          )}
           <div>
             <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">What was it for?</label>
-            <input
-              required
-              autoFocus
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
-              placeholder="e.g. Pizza dinner"
-            />
+            <div className="relative">
+              <input
+                required
+                autoFocus
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
+                placeholder="e.g. Pizza dinner"
+              />
+              {showSuggestions && uniqueDescriptions.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-card border border-line rounded-xl shadow-modal overflow-hidden z-50">
+                  {uniqueDescriptions.map((desc, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSelectSuggestion(desc)}
+                      className="w-full text-left px-4 py-2 hover:bg-paper text-xs font-semibold text-ink transition-colors"
+                    >
+                      {desc}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Category</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
-            >
-              {["Food", "Travel", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"].map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Category</label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
+              >
+                {["Food", "Travel", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"].map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Transaction Date</label>
+              <input
+                type="date"
+                required
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
+              />
+            </div>
           </div>
           
           <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Amount (₹)</label>
+            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">
+              Amount ({CURRENCY_SYMBOLS[group?.currency || "INR"] || "₹"})
+            </label>
             <input
               type="number"
               step="0.01"
@@ -734,7 +1027,7 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
                   <div key={id} className="flex items-center justify-between gap-3">
                     <span className="text-xs font-bold text-ink">{m?.name}</span>
                     <div className="flex items-center gap-1">
-                      {splitType === "exact" && <span className="text-xs text-inksoft">₹</span>}
+                      {splitType === "exact" && <span className="text-xs text-inksoft">{CURRENCY_SYMBOLS[group?.currency || "INR"] || "₹"}</span>}
                       <input
                         type="number"
                         step="0.01"
@@ -755,6 +1048,28 @@ function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded
               </div>
             </div>
           )}
+
+          <div className="border-t border-line/60 pt-3">
+            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Attach Receipt</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files[0]) {
+                    setReceiptUrl("https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80");
+                    toast("Receipt attached!", "success");
+                  }
+                }}
+                className="block w-full text-xs text-inksoft file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-brand-soft file:text-brand dark:file:bg-brand-soft/20 dark:file:text-brand-mint hover:file:opacity-90 file:cursor-pointer transition"
+              />
+              {receiptUrl && (
+                <span className="text-[9px] font-bold text-brand bg-brand-soft dark:bg-brand-soft/20 dark:text-brand-mint px-2 py-1 rounded-lg shrink-0 flex items-center gap-1 animate-fadeIn">
+                  Attached ✓
+                </span>
+              )}
+            </div>
+          </div>
 
           <button
             type="submit"
@@ -857,7 +1172,7 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
 
             <div className="space-y-1.5">
               <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft">
-                Payment Amount (₹)
+                Payment Amount ({CURRENCY_SYMBOLS[group?.currency || "INR"] || "₹"})
               </label>
               <input
                 type="number"
@@ -976,7 +1291,13 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
 
                   const mx = (x1 + x2) / 2;
                   const my = (y1 + y2) / 2;
-                  const offset = 22; // bend factor
+                  const fromIndex = members.findIndex((m) => m._id === t.from);
+                  const toIndex = members.findIndex((m) => m._id === t.to);
+                  const diff = Math.min(
+                    Math.abs(fromIndex - toIndex),
+                    members.length - Math.abs(fromIndex - toIndex)
+                  );
+                  const offset = diff === 1 ? 18 : 38;
                   const cx = mx + px * offset;
                   const cy = my + py * offset;
 
@@ -1063,8 +1384,8 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                         cx={pos.x}
                         cy={pos.y}
                         r="15"
-                        fill="var(--color-brand)"
-                        className="shadow-md hover:scale-110 transform origin-center transition-all duration-200 hover:fill-brand-mint"
+                        fill={memberColorHexFor(m._id)}
+                        className="shadow-md hover:scale-110 transform origin-center transition-all duration-200"
                       />
                       {/* Member Initials */}
                       <text

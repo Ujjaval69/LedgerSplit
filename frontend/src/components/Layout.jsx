@@ -24,6 +24,18 @@ export default function Layout({ children, onNewGroup }) {
   const [groups, setGroups] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const goOnline = () => setIsOffline(false);
+    const goOffline = () => setIsOffline(true);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("ledgersplit_theme");
     if (saved) return saved === "dark";
@@ -68,7 +80,13 @@ export default function Layout({ children, onNewGroup }) {
   }
 
   return (
-    <div className="min-h-screen flex bg-paper text-ink transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-paper text-ink transition-colors duration-200">
+      {isOffline && (
+        <div className="bg-red-500 text-white text-[10px] font-bold py-1.5 px-4 text-center tracking-wider uppercase animate-fadeIn shrink-0 flex items-center justify-center gap-1.5 z-[9999] shadow-md">
+          <span>⚠️ You are offline. Changes will sync when connection returns.</span>
+        </div>
+      )}
+      <div className="flex flex-1 relative w-full overflow-hidden">
       
       {/* Mobile Top Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 h-16 bg-card border-b border-line flex items-center justify-between px-4 transition-colors duration-200">
@@ -319,6 +337,7 @@ export default function Layout({ children, onNewGroup }) {
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto pt-16 lg:pt-0">
           {children}
+        </div>
         </div>
       </div>
     </div>

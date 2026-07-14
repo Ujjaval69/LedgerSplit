@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, Stamp, TrendingUp, Users } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 import api from "../api/client";
 
 export default function Login() {
@@ -15,6 +16,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const { login, loginWithGoogle, verifyEmail } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
 
   // Initialize Google Login
@@ -145,7 +147,7 @@ export default function Login() {
     setError("");
     try {
       await api.post("/auth/resend-verification", { email: verifyEmailAddress });
-      alert("Verification OTP resent successfully.");
+      toast("Verification OTP resent successfully.", "success");
     } catch (err) {
       setError(err.response?.data?.message || "Could not resend OTP");
     }

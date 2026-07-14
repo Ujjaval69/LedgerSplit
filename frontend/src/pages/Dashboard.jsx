@@ -4,6 +4,7 @@ import { Plus, Users, X, TrendingUp, TrendingDown, Scale, BookOpen } from "lucid
 import api from "../api/client";
 import Layout from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
 
 const ACCENT_PAIRS = [
   ["from-emerald-400 to-teal-600", "text-emerald-500"],
@@ -18,8 +19,16 @@ function accentFor(id) {
   return ACCENT_PAIRS[hash];
 }
 
-function rupee(n) {
-  return "₹" + Math.round(Math.abs(n)).toLocaleString("en-IN");
+const CURRENCY_SYMBOLS = {
+  INR: "₹",
+  USD: "$",
+  EUR: "€",
+  GBP: "£"
+};
+
+function formatCurrency(n, curr = "INR") {
+  const symbol = CURRENCY_SYMBOLS[curr] || "₹";
+  return symbol + Math.round(Math.abs(n)).toLocaleString(curr === "INR" ? "en-IN" : "en-US");
 }
 
 function greeting() {
@@ -33,22 +42,43 @@ export default function Dashboard() {
   const [groups, setGroups] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [activityUserFilter, setActivityUserFilter] = useState("All");
+  const [hasMoreActivities, setHasMoreActivities] = useState(false);
+  const [activitiesPage, setActivitiesPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
+
+  async function handleSeedDemo() {
+    setSeeding(true);
+    try {
+      await api.post("/groups/seed-demo");
+      window.dispatchEvent(new Event("groupCreated")); // trigger sidebar reload
+      toast("Demo Goa Trip seeded successfully!", "success");
+      refresh();
+    } catch (err) {
+      toast(err.response?.data?.message || "Could not seed demo data", "error");
+    } finally {
+      setSeeding(false);
+    }
+  }
 
   function refresh() {
     setLoading(true);
     Promise.all([
       api.get("/groups"),
       api.get("/dashboard"),
-      api.get("/activity")
+      api.get("/activity?page=1&limit=10")
     ])
       .then(([groupsRes, dashRes, actRes]) => {
         setGroups(groupsRes.data);
         setAnalytics(dashRes.data);
-        setActivities(actRes.data);
+        setActivities(actRes.data.activities || actRes.data);
+        setHasMoreActivities(actRes.data.hasMore || false);
+        setActivitiesPage(1);
       })
       .catch((err) => {
         console.error("Dashboard loading error:", err);
@@ -56,7 +86,29 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }
 
+  async function loadMoreActivities() {
+    const nextPage = activitiesPage + 1;
+    try {
+      const res = await api.get(`/activity?page=${nextPage}&limit=10`);
+      const newActs = res.data.activities || [];
+      setActivities((prev) => [...prev, ...newActs]);
+      setHasMoreActivities(res.data.hasMore || false);
+      setActivitiesPage(nextPage);
+    } catch (err) {
+      console.error("Could not load more activities:", err);
+    }
+  }
+
   useEffect(refresh, []);
+
+  const uniqueActivityUsers = Array.from(
+    new Map((activities || []).map((act) => [act.user?._id, act.user])).values()
+  ).filter(Boolean);
+
+  const filteredActivities = (activities || []).filter((act) => {
+    if (activityUserFilter === "All") return true;
+    return act.user?._id === activityUserFilter;
+  });
 
   return (
     <Layout onNewGroup={() => setShowCreate(true)}>
@@ -80,14 +132,45 @@ export default function Dashboard() {
 
         {loading ? (
           <div className="space-y-8 animate-pulse">
+            {/* Pulsating Cards Row */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="h-24 rounded-2xl bg-card border border-line" />
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="bg-card border border-line rounded-2xl p-5 space-y-3">
+                  <div className="h-2.5 bg-paper dark:bg-paper/20 rounded w-1/3" />
+                  <div className="h-6 bg-paper dark:bg-paper/20 rounded w-1/2" />
+                  <div className="h-2.5 bg-paper dark:bg-paper/20 rounded w-2/3" />
+                </div>
               ))}
             </div>
+            {/* Pulsating Analytics Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="h-56 rounded-2xl bg-card border border-line" />
-              <div className="h-56 rounded-2xl bg-card border border-line" />
+              <div className="bg-card border border-line rounded-2xl p-5 space-y-4">
+                <div className="h-3 bg-paper dark:bg-paper/20 rounded w-1/4" />
+                <div className="flex items-end justify-between gap-3 h-32 pt-4">
+                  {[45, 80, 55, 90, 30, 65].map((val, idx) => (
+                    <div key={idx} className="flex-1 flex flex-col items-center gap-2">
+                      <div className="w-full bg-paper dark:bg-paper/10 rounded-t h-24 flex items-end">
+                        <div style={{ height: `${val}%` }} className="w-full bg-paper dark:bg-paper/20 rounded-t" />
+                      </div>
+                      <div className="h-2 bg-paper dark:bg-paper/20 rounded w-8" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-card border border-line rounded-2xl p-5 space-y-4">
+                <div className="h-3 bg-paper dark:bg-paper/20 rounded w-1/4" />
+                <div className="space-y-3 pt-2">
+                  {[1, 2, 3, 4].map((idx) => (
+                    <div key={idx} className="space-y-2">
+                      <div className="flex justify-between">
+                        <div className="h-2.5 bg-paper dark:bg-paper/20 rounded w-1/5" />
+                        <div className="h-2.5 bg-paper dark:bg-paper/20 rounded w-1/6" />
+                      </div>
+                      <div className="h-1.5 bg-paper dark:bg-paper/10 rounded w-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         ) : (
@@ -305,15 +388,30 @@ export default function Dashboard() {
 
                   {/* Recent Activity Panel */}
                   <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover transition-all flex flex-col h-[400px]">
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-inksoft mb-4">Recent Activity</h3>
+                    <div className="flex justify-between items-center mb-4 shrink-0">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-inksoft">Recent Activity</h3>
+                      <select
+                        value={activityUserFilter}
+                        onChange={(e) => setActivityUserFilter(e.target.value)}
+                        className="border border-line bg-card rounded-lg px-2 py-1 text-[10px] font-bold text-ink outline-none cursor-pointer"
+                      >
+                        <option value="All">All Members</option>
+                        {uniqueActivityUsers.map((u) => (
+                          <option key={u._id} value={u._id}>
+                            {u.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
                     <div className="space-y-4 overflow-y-auto flex-1 pr-1 custom-scrollbar">
-                      {activities.length === 0 ? (
+                      {filteredActivities.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center text-xs text-inksoft">
-                          No recent activity logs.
+                          No matching activity logs.
                         </div>
                       ) : (
-                        activities.map((act) => (
-                          <div key={act._id} className="flex gap-2.5 text-[11px] leading-relaxed">
+                        filteredActivities.map((act) => (
+                          <div key={act._id} className="flex gap-2.5 text-[11px] leading-relaxed animate-fadeInUp">
                             <div className="w-1.5 h-1.5 rounded-full bg-brand mt-1.5 shrink-0" />
                             <div className="space-y-0.5">
                               <p className="text-ink font-bold">{act.message}</p>
@@ -329,6 +427,14 @@ export default function Dashboard() {
                           </div>
                         ))
                       )}
+                      {hasMoreActivities && (
+                        <button
+                          onClick={loadMoreActivities}
+                          className="w-full py-2.5 mt-2 bg-paper hover:bg-paper/85 text-[10px] uppercase tracking-wider font-extrabold text-brand dark:text-brand-mint rounded-xl transition border border-line/45 text-center"
+                        >
+                          Load More Activities
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -341,29 +447,52 @@ export default function Dashboard() {
               
               {groups.length === 0 ? (
                 <div className="border border-dashed border-line rounded-2xl p-8 sm:p-14 text-center bg-card/50">
-                  <div className="w-12 h-12 rounded-2xl bg-brand-soft text-brand dark:bg-brand-soft/20 dark:text-brand-mint mx-auto mb-4 flex items-center justify-center shadow-sm">
-                    <BookOpen size={20} />
+                  {/* Visual Vector Illustration */}
+                  <div className="w-48 h-32 mx-auto mb-6 flex items-center justify-center opacity-85">
+                    <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                      {/* Grid background lines */}
+                      <path d="M 20 80 L 100 80" stroke="var(--color-line)" strokeWidth="1" strokeDasharray="3 3"/>
+                      <path d="M 20 50 L 100 50" stroke="var(--color-line)" strokeWidth="1" strokeDasharray="3 3"/>
+                      
+                      {/* Ledger Cards */}
+                      <rect x="25" y="30" width="40" height="50" rx="8" fill="var(--color-brand-soft)" opacity="0.4" stroke="var(--color-brand)" strokeWidth="1.5"/>
+                      <rect x="45" y="20" width="40" height="50" rx="8" fill="var(--color-card)" stroke="var(--color-line)" strokeWidth="1.5" className="shadow-md"/>
+                      
+                      {/* Notebook Binder rings */}
+                      <circle cx="25" cy="40" r="2.5" fill="var(--color-inksoft)"/>
+                      <circle cx="25" cy="55" r="2.5" fill="var(--color-inksoft)"/>
+                      <circle cx="25" cy="70" r="2.5" fill="var(--color-inksoft)"/>
+                      
+                      {/* Inner card content lines */}
+                      <rect x="53" y="32" width="24" height="3" rx="1.5" fill="var(--color-inksoft)" opacity="0.3"/>
+                      <rect x="53" y="42" width="16" height="3" rx="1.5" fill="var(--color-inksoft)" opacity="0.3"/>
+                      <rect x="53" y="52" width="20" height="3" rx="1.5" fill="var(--color-inksoft)" opacity="0.3"/>
+                      
+                      {/* Flying coins */}
+                      <circle cx="85" cy="35" r="5" fill="var(--color-brand)" className="animate-bounce" style={{ animationDuration: '3s' }}/>
+                      <circle cx="95" cy="55" r="3.5" fill="var(--color-brand-mint)"/>
+                    </svg>
                   </div>
                   <h3 className="font-sans font-bold text-base text-ink mb-1.5">Start your first ledger</h3>
                   <p className="text-inksoft text-xs mb-6 max-w-xs mx-auto leading-relaxed">
                     A ledger tracks shared costs for one group of people — pick whatever fits your life.
                   </p>
-                  <div className="flex flex-wrap justify-center gap-2 mb-6">
-                    {["Hostel room", "Trip with friends", "Flatmates", "Team snacks"].map((ex) => (
-                      <span
-                        key={ex}
-                        className="text-[10px] font-bold text-inksoft bg-card border border-line rounded-full px-3 py-1"
-                      >
-                        {ex}
-                      </span>
-                    ))}
+                  
+                  <div className="flex flex-col sm:flex-row justify-center items-center gap-3">
+                    <button
+                      onClick={() => setShowCreate(true)}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition"
+                    >
+                      <Plus size={14} /> Create a Ledger
+                    </button>
+                    <button
+                      onClick={handleSeedDemo}
+                      disabled={seeding}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 border border-brand/20 bg-brand-soft text-brand dark:bg-brand-soft/10 dark:text-brand-mint px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition disabled:opacity-50"
+                    >
+                      {seeding ? "Seeding Demo..." : "💡 Seed Goa Trip Demo"}
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setShowCreate(true)}
-                    className="inline-flex items-center gap-2 bg-brand text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition"
-                  >
-                    <Plus size={14} /> Create a Ledger
-                  </button>
                 </div>
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -392,7 +521,7 @@ export default function Dashboard() {
                               }`}
                             >
                               {isCredit ? "+" : "-"}
-                              {rupee(bal)}
+                              {formatCurrency(bal, g.currency)}
                             </span>
                           ) : (
                             <span className="text-[10px] font-bold text-inksoft bg-paper dark:bg-paper/10 px-2 py-0.5 rounded-lg">
@@ -432,6 +561,7 @@ export default function Dashboard() {
 function CreateGroupModal({ onClose, onCreated }) {
   const [name, setName] = useState("");
   const [emails, setEmails] = useState("");
+  const [currency, setCurrency] = useState("INR");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -453,7 +583,7 @@ function CreateGroupModal({ onClose, onCreated }) {
         return;
       }
 
-      await api.post("/groups", { name, memberEmails });
+      await api.post("/groups", { name, memberEmails, currency });
       window.dispatchEvent(new Event("groupCreated"));
       onCreated();
     } catch (err) {
@@ -507,6 +637,19 @@ function CreateGroupModal({ onClose, onCreated }) {
               className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
               placeholder="priya@mail.com, rohan@mail.com"
             />
+          </div>
+          <div>
+            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Base Currency</label>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
+            >
+              <option value="INR">INR (₹)</option>
+              <option value="USD">USD ($)</option>
+              <option value="EUR">EUR (€)</option>
+              <option value="GBP">GBP (£)</option>
+            </select>
           </div>
           <button
             type="submit"
