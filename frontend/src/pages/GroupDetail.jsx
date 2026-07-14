@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Stamp, X, ArrowRight, Receipt, Trash2, UserPlus, ArrowLeft } from "lucide-react";
+import { Plus, Stamp, X, ArrowRight, Receipt, Trash2, UserPlus, ArrowLeft, Pencil } from "lucide-react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import Layout from "../components/Layout";
@@ -26,6 +26,7 @@ export default function GroupDetail() {
   const [showAdd, setShowAdd] = useState(false);
   const [showSettle, setShowSettle] = useState(false);
   const [showAddMember, setShowAddMember] = useState(false);
+  const [editingExpense, setEditingExpense] = useState(null);
 
   const load = useCallback(() => {
     api.get(`/groups/${id}`).then((res) => setData(res.data)).catch(() => {});
@@ -62,6 +63,27 @@ export default function GroupDetail() {
       setData(res.data);
     } catch (err) {
       alert(err.response?.data?.message || "Could not remove member");
+    }
+  }
+
+  async function recordSettlement(fromId, toId, amount) {
+    const fromName = nameOf(fromId);
+    const toName = nameOf(toId);
+    if (!window.confirm(`Record settlement payment: ₹${amount} from ${fromName} to ${toName}?`)) return;
+    try {
+      await api.post("/expenses", {
+        groupId: id,
+        description: `Settlement: ${fromName} to ${toName}`,
+        amount,
+        paidBy: fromId,
+        splitAmong: [toId],
+        splitType: "equal",
+        category: "Other"
+      });
+      setShowSettle(false);
+      load();
+    } catch (err) {
+      alert(err.response?.data?.message || "Could not record settlement");
     }
   }
 
@@ -215,20 +237,34 @@ export default function GroupDetail() {
                         {new Date(exp.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-bold text-ink">{exp.description}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-ink">{exp.description}</span>
+                          <span className="px-2 py-0.5 text-[9px] font-extrabold rounded-full bg-paper dark:bg-paper/10 text-brand-mint/90 border border-line uppercase tracking-wider">
+                            {exp.category || "Other"}
+                          </span>
+                        </div>
                         <div className="text-[10px] text-inksoft mt-0.5">split {exp.splitAmong.length} ways</div>
                       </td>
                       <td className="px-6 py-4 font-medium">{exp.paidBy.name}</td>
                       <td className="px-6 py-4 text-right font-mono font-bold ls-mono">{rupee(exp.amount)}</td>
                       <td className="px-6 py-4 text-right">
-                        <button
-                          onClick={() => deleteExpense(exp._id)}
-                          aria-label={`Delete expense: ${exp.description}`}
-                          className="p-1 rounded-md text-inksoft hover:text-red-500 hover:bg-red-500/5 transition opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-                          title="Delete expense"
-                        >
-                          <Trash2 size={13} />
-                        </button>
+                        <div className="flex justify-end gap-1">
+                          <button
+                            onClick={() => setEditingExpense(exp)}
+                            className="p-1 rounded-md text-inksoft hover:text-brand hover:bg-brand/5 transition opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                            title="Edit expense"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            onClick={() => deleteExpense(exp._id)}
+                            aria-label={`Delete expense: ${exp.description}`}
+                            className="p-1 rounded-md text-inksoft hover:text-red-500 hover:bg-red-500/5 transition opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                            title="Delete expense"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -247,13 +283,18 @@ export default function GroupDetail() {
       </main>
 
       {/* Modal: Add Expense */}
-      {showAdd && (
+      {(showAdd || editingExpense) && (
         <AddExpenseModal
           group={group}
           currentUserId={user._id}
-          onClose={() => setShowAdd(false)}
+          expenseToEdit={editingExpense}
+          onClose={() => {
+            setShowAdd(false);
+            setEditingExpense(null);
+          }}
           onAdded={() => {
             setShowAdd(false);
+            setEditingExpense(null);
             load();
           }}
         />
@@ -261,7 +302,12 @@ export default function GroupDetail() {
 
       {/* Modal: Settle Settlements */}
       {showSettle && (
-        <SettleModal settlements={settlements} nameOf={nameOf} onClose={() => setShowSettle(false)} />
+        <SettleModal
+          settlements={settlements}
+          nameOf={nameOf}
+          onSettle={recordSettlement}
+          onClose={() => setShowSettle(false)}
+        />
       )}
 
       {/* Modal: Add Member */}
@@ -279,13 +325,19 @@ export default function GroupDetail() {
   );
 }
 
-function AddExpenseModal({ group, currentUserId, onClose, onAdded }) {
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [paidBy, setPaidBy] = useState(currentUserId);
-  const [splitAmong, setSplitAmong] = useState(group.members.map((m) => m._id));
-  const [splitType, setSplitType] = useState("equal");
-  const [splitDetails, setSplitDetails] = useState({});
+function AddExpenseModal({ group, currentUserId, expenseToEdit, onClose, onAdded }) {
+  const [description, setDescription] = useState(expenseToEdit ? expenseToEdit.description : "");
+  const [amount, setAmount] = useState(expenseToEdit ? expenseToEdit.amount : "");
+  const [paidBy, setPaidBy] = useState(expenseToEdit ? (expenseToEdit.paidBy._id || expenseToEdit.paidBy) : currentUserId);
+  const [splitAmong, setSplitAmong] = useState(expenseToEdit ? expenseToEdit.splitAmong : group.members.map((m) => m._id));
+  const [splitType, setSplitType] = useState(expenseToEdit ? expenseToEdit.splitType : "equal");
+  const [splitDetails, setSplitDetails] = useState(() => {
+    if (expenseToEdit && expenseToEdit.shares) {
+      return expenseToEdit.shares;
+    }
+    return {};
+  });
+  const [category, setCategory] = useState(expenseToEdit ? expenseToEdit.category || "Other" : "Other");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -317,13 +369,18 @@ function AddExpenseModal({ group, currentUserId, onClose, onAdded }) {
         paidBy,
         splitAmong,
         splitType,
+        category,
       };
       if (splitType !== "equal") {
         payload.splitDetails = Object.fromEntries(
           splitAmong.map((id) => [id, parseFloat(splitDetails[id]) || 0])
         );
       }
-      await api.post("/expenses", payload);
+      if (expenseToEdit) {
+        await api.put(`/expenses/${expenseToEdit._id}`, payload);
+      } else {
+        await api.post("/expenses", payload);
+      }
       onAdded();
     } catch (err) {
       setError(err.response?.data?.message || "Could not add expense");
@@ -342,7 +399,7 @@ function AddExpenseModal({ group, currentUserId, onClose, onAdded }) {
         className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-modal border border-line animate-scaleIn max-h-[90vh] overflow-y-auto"
       >
         <div className="flex justify-between items-center mb-5">
-          <h3 className="font-sans font-bold text-lg text-ink">Add an Expense</h3>
+          <h3 className="font-sans font-bold text-lg text-ink">{expenseToEdit ? "Edit Expense" : "Add an Expense"}</h3>
           <button onClick={onClose} className="text-inksoft hover:text-ink transition">
             <X size={18} />
           </button>
@@ -365,6 +422,21 @@ function AddExpenseModal({ group, currentUserId, onClose, onAdded }) {
               className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
               placeholder="e.g. Pizza dinner"
             />
+          </div>
+
+          <div>
+            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full border border-line bg-paper/20 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition dark:bg-paper/5"
+            >
+              {["Food", "Travel", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"].map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
           </div>
           
           <div>
@@ -480,7 +552,7 @@ function AddExpenseModal({ group, currentUserId, onClose, onAdded }) {
             disabled={saving || detailMismatch || splitAmong.length === 0}
             className="w-full bg-brand text-white py-3 rounded-xl font-bold text-sm disabled:opacity-50 hover:opacity-90 active:scale-95 transition-all shadow-sm"
           >
-            {saving ? "Adding..." : "Add to Ledger"}
+            {saving ? (expenseToEdit ? "Saving..." : "Adding...") : (expenseToEdit ? "Save Changes" : "Add to Ledger")}
           </button>
         </form>
       </div>
@@ -488,7 +560,7 @@ function AddExpenseModal({ group, currentUserId, onClose, onAdded }) {
   );
 }
 
-function SettleModal({ settlements, nameOf, onClose }) {
+function SettleModal({ settlements, nameOf, onSettle, onClose }) {
   return (
     <div
       className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn"
@@ -512,19 +584,30 @@ function SettleModal({ settlements, nameOf, onClose }) {
             </div>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {settlements.map((t, i) => (
               <div
                 key={i}
                 style={{ animationDelay: `${i * 60}ms` }}
                 className="flex items-center justify-between border border-line rounded-xl px-4 py-3 bg-paper/20 animate-fadeInUp"
               >
-                <div className="flex items-center gap-2 text-xs font-bold text-ink">
-                  <span>{nameOf(t.from)}</span>
-                  <ArrowRight size={13} className="text-inksoft" />
-                  <span>{nameOf(t.to)}</span>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-ink">
+                    <span>{nameOf(t.from)}</span>
+                    <ArrowRight size={12} className="text-inksoft" />
+                    <span>{nameOf(t.to)}</span>
+                  </div>
+                  <div className="text-[10px] text-inksoft font-medium">Simplified IOU</div>
                 </div>
-                <span className="font-mono font-bold text-red-500">{rupee(t.amount)}</span>
+                <div className="flex items-center gap-3">
+                  <span className="font-mono font-bold text-red-500">{rupee(t.amount)}</span>
+                  <button
+                    onClick={() => onSettle(t.from, t.to, t.amount)}
+                    className="bg-brand text-white text-[10px] font-bold px-2.5 py-1 rounded-lg hover:opacity-90 active:scale-95 transition"
+                  >
+                    Settle
+                  </button>
+                </div>
               </div>
             ))}
             <div className="flex justify-center pt-3">

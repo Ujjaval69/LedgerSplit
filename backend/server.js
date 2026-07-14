@@ -6,6 +6,8 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/auth");
 const groupRoutes = require("./routes/groups");
 const expenseRoutes = require("./routes/expenses");
+const dashboardRoutes = require("./routes/dashboard");
+const activityRoutes = require("./routes/activity");
 
 const app = express();
 
@@ -19,6 +21,8 @@ app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/groups", groupRoutes);
 app.use("/api/expenses", expenseRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/activity", activityRoutes);
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));

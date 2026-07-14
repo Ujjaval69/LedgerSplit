@@ -24,12 +24,30 @@ export function AuthProvider({ children }) {
     const res = await api.post("/auth/login", { email, password });
     localStorage.setItem("ledgersplit_token", res.data.token);
     setUser(res.data.user);
+    return res.data;
   }
 
   async function register(name, email, password) {
     const res = await api.post("/auth/register", { name, email, password });
+    if (res.data.token) {
+      localStorage.setItem("ledgersplit_token", res.data.token);
+      setUser(res.data.user);
+    }
+    return res.data;
+  }
+
+  async function verifyEmail(email, otp) {
+    const res = await api.post("/auth/verify-email", { email, otp });
     localStorage.setItem("ledgersplit_token", res.data.token);
     setUser(res.data.user);
+    return res.data;
+  }
+
+  async function loginWithGoogle(credential) {
+    const res = await api.post("/auth/google", { credential });
+    localStorage.setItem("ledgersplit_token", res.data.token);
+    setUser(res.data.user);
+    return res.data;
   }
 
   function logout() {
@@ -38,7 +56,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, verifyEmail, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

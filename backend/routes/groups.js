@@ -2,6 +2,7 @@ const express = require("express");
 const Group = require("../models/Group");
 const Expense = require("../models/Expense");
 const User = require("../models/User");
+const Activity = require("../models/Activity");
 const { protect } = require("../middleware/auth");
 const { simplifyDebts, computeNetBalances } = require("../utils/settleUp");
 
@@ -46,6 +47,14 @@ router.post("/", async (req, res) => {
       members: Array.from(memberIds),
     });
 
+    // Create activity
+    await Activity.create({
+      user: req.user._id,
+      group: group._id,
+      action: "create_group",
+      message: `${req.user.name} created the ledger "${group.name}".`,
+    });
+
     const populated = await group.populate("members", "name email");
     res.status(201).json(populated);
   } catch (err) {
@@ -81,6 +90,14 @@ router.post("/:id/members", async (req, res) => {
   if (!group.members.includes(user._id)) {
     group.members.push(user._id);
     await group.save();
+    
+    // Create activity
+    await Activity.create({
+      user: req.user._id,
+      group: group._id,
+      action: "join_group",
+      message: `${req.user.name} added ${user.name} to the group.`,
+    });
   }
   const populated = await group.populate("members", "name email");
   res.json(populated);

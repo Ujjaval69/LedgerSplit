@@ -31,25 +31,32 @@ function greeting() {
 
 export default function Dashboard() {
   const [groups, setGroups] = useState([]);
+  const [analytics, setAnalytics] = useState(null);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
 
   function refresh() {
-    api
-      .get("/groups")
-      .then((res) => setGroups(res.data))
-      .catch(() => {})
+    setLoading(true);
+    Promise.all([
+      api.get("/groups"),
+      api.get("/dashboard"),
+      api.get("/activity")
+    ])
+      .then(([groupsRes, dashRes, actRes]) => {
+        setGroups(groupsRes.data);
+        setAnalytics(dashRes.data);
+        setActivities(actRes.data);
+      })
+      .catch((err) => {
+        console.error("Dashboard loading error:", err);
+      })
       .finally(() => setLoading(false));
   }
 
   useEffect(refresh, []);
-
-  const totalProjects = groups.length;
-  const endedProjects = groups.filter((g) => Math.abs(g.yourBalance || 0) < 1).length;
-  const runningProjects = groups.filter((g) => Math.abs(g.yourBalance || 0) >= 1).length;
-  const pendingProjects = groups.filter((g) => (g.yourBalance || 0) < -1).length;
 
   return (
     <Layout onNewGroup={() => setShowCreate(true)}>
@@ -72,71 +79,260 @@ export default function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="space-y-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="h-32 rounded-2xl bg-card border border-line animate-pulse" />
+          <div className="space-y-8 animate-pulse">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-24 rounded-2xl bg-card border border-line" />
               ))}
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="h-36 rounded-2xl bg-card border border-line animate-pulse" />
-              ))}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="h-56 rounded-2xl bg-card border border-line" />
+              <div className="h-56 rounded-2xl bg-card border border-line" />
             </div>
           </div>
         ) : (
           <div className="space-y-8 animate-fadeIn">
-            {/* Summary Statistics Cards (as per layout image) */}
-            {groups.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Total Projects (Card 1: Forest Green) */}
-                <div className="bg-brand text-white rounded-2xl p-5 shadow-sm flex flex-col justify-between h-36 relative overflow-hidden transition-all hover:translate-y-[-2px]">
-                  <div className="flex justify-between items-start">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-white/80">Total Ledgers</span>
-                    <div className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-white">
-                      <span className="text-sm font-sans font-bold">↗</span>
+            {analytics && (
+              <>
+                {/* Balance Cards Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Net Balance Card */}
+                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:translate-y-[-1px] transition-all duration-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-inksoft">Net Position</span>
+                      <span className={`text-[10px] font-extrabold ${analytics.netBalance >= 0 ? "text-brand" : "text-red-500"}`}>
+                        {analytics.netBalance >= 0 ? "SURPLUS" : "DEFICIT"}
+                      </span>
                     </div>
+                    <div className={`text-2xl font-extrabold font-mono tracking-tight ls-mono ${analytics.netBalance >= 0 ? "text-brand" : "text-red-500"}`}>
+                      {analytics.netBalance >= 0 ? "+" : "-"} {rupee(analytics.netBalance)}
+                    </div>
+                    <span className="text-[10px] text-inksoft font-medium">Your net balance across all ledgers</span>
                   </div>
-                  <div className="text-4xl font-extrabold tracking-tight">{totalProjects}</div>
-                  <span className="text-[10px] font-semibold text-white/70 block">Active split groups</span>
+
+                  {/* You Are Owed Card */}
+                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:translate-y-[-1px] transition-all duration-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-inksoft">You are owed</span>
+                      <span className="text-brand font-extrabold">↗</span>
+                    </div>
+                    <div className="text-2xl font-extrabold font-mono text-brand tracking-tight ls-mono">
+                      {rupee(analytics.youAreOwed)}
+                    </div>
+                    <span className="text-[10px] text-inksoft font-medium">Outstanding collections</span>
+                  </div>
+
+                  {/* You Owe Card */}
+                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:translate-y-[-1px] transition-all duration-200">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] uppercase font-bold tracking-wider text-inksoft">You owe</span>
+                      <span className="text-red-500 font-extrabold">↘</span>
+                    </div>
+                    <div className="text-2xl font-extrabold font-mono text-red-500 tracking-tight ls-mono">
+                      {rupee(analytics.youOwe)}
+                    </div>
+                    <span className="text-[10px] text-inksoft font-medium">Pending repayments</span>
+                  </div>
                 </div>
 
-                {/* Ended Projects (Card 2: White) */}
-                <div className="bg-card border border-line text-ink rounded-2xl p-5 shadow-sm flex flex-col justify-between h-36 transition-all hover:translate-y-[-2px] hover:shadow-card-hover">
-                  <div className="flex justify-between items-start">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-inksoft">Ended Ledgers</span>
-                    <div className="w-7 h-7 rounded-full bg-paper dark:bg-paper/10 flex items-center justify-center text-ink">
-                      <span className="text-sm font-sans font-bold">↗</span>
+                {/* Statistics Cards Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  {/* Total Spending (Forest Green Card) */}
+                  <div className="bg-brand text-white rounded-2xl p-5 shadow-sm hover:translate-y-[-1px] transition-all duration-200 flex flex-col justify-between h-28 relative overflow-hidden">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/80">Total Spending</span>
+                      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center font-bold text-white text-[10px]">
+                        ₹
+                      </div>
                     </div>
+                    <div className="text-2xl font-extrabold tracking-tight font-mono">{rupee(analytics.totalExpenses)}</div>
+                    <span className="text-[9px] text-white/70 font-medium">Your personal share of group bills</span>
                   </div>
-                  <div className="text-4xl font-extrabold tracking-tight text-ink">{endedProjects}</div>
-                  <span className="text-[10px] font-semibold text-brand block">All settled up</span>
+
+                  {/* Total Groups (White Card) */}
+                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:translate-y-[-1px] transition-all duration-200 flex flex-col justify-between h-28">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-inksoft">Total Ledgers</span>
+                      <div className="w-6 h-6 rounded-full bg-paper dark:bg-paper/10 flex items-center justify-center text-inksoft">
+                        <BookOpen size={12} />
+                      </div>
+                    </div>
+                    <div className="text-2xl font-extrabold tracking-tight text-ink font-mono">{analytics.totalGroups}</div>
+                    <span className="text-[9px] text-inksoft font-medium">Active group ledgers joined</span>
+                  </div>
+
+                  {/* Total Members (White Card) */}
+                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:translate-y-[-1px] transition-all duration-200 flex flex-col justify-between h-28">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-inksoft">Total Friends</span>
+                      <div className="w-6 h-6 rounded-full bg-paper dark:bg-paper/10 flex items-center justify-center text-inksoft">
+                        <Users size={12} />
+                      </div>
+                    </div>
+                    <div className="text-2xl font-extrabold tracking-tight text-ink font-mono">{analytics.totalMembers}</div>
+                    <span className="text-[9px] text-inksoft font-medium">Unique friends split with</span>
+                  </div>
                 </div>
 
-                {/* Running Projects (Card 3: White) */}
-                <div className="bg-card border border-line text-ink rounded-2xl p-5 shadow-sm flex flex-col justify-between h-36 transition-all hover:translate-y-[-2px] hover:shadow-card-hover">
-                  <div className="flex justify-between items-start">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-inksoft">Running Ledgers</span>
-                    <div className="w-7 h-7 rounded-full bg-paper dark:bg-paper/10 flex items-center justify-center text-ink">
-                      <span className="text-sm font-sans font-bold">↗</span>
-                    </div>
+                {/* Charts Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Monthly Spending SVG Bar Chart */}
+                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover transition-all">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-inksoft mb-4">Monthly Spending</h3>
+                    {analytics.monthlyExpenses.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-48 text-center text-xs text-inksoft">
+                        No monthly activity logged yet.
+                      </div>
+                    ) : (
+                      <div className="flex items-end justify-between gap-3 h-48 pt-4 pb-2 px-2">
+                        {(() => {
+                          const maxAmount = Math.max(...analytics.monthlyExpenses.map((m) => m.amount), 1);
+                          return analytics.monthlyExpenses.slice(-6).map((m) => {
+                            const pct = (m.amount / maxAmount) * 100;
+                            return (
+                              <div key={m.month} className="flex-1 flex flex-col items-center gap-2 group relative">
+                                <div className="absolute bottom-full mb-1 bg-ink text-paper text-[10px] font-bold py-1 px-1.5 rounded opacity-0 group-hover:opacity-100 transition shadow-sm pointer-events-none whitespace-nowrap z-10">
+                                  {rupee(m.amount)}
+                                </div>
+                                <div className="w-full bg-paper dark:bg-paper/10 rounded-lg h-32 flex items-end overflow-hidden">
+                                  <div 
+                                    style={{ height: `${pct}%` }} 
+                                    className="w-full bg-brand group-hover:opacity-85 transition-all duration-300 rounded-t-sm"
+                                  />
+                                </div>
+                                <span className="text-[10px] font-bold text-inksoft uppercase tracking-wider">
+                                  {new Date(m.month + "-02").toLocaleDateString("en-US", { month: "short" })}
+                                </span>
+                              </div>
+                            );
+                          });
+                        })()}
+                      </div>
+                    )}
                   </div>
-                  <div className="text-4xl font-extrabold tracking-tight text-ink">{runningProjects}</div>
-                  <span className="text-[10px] font-semibold text-brand block">Active calculations</span>
+
+                  {/* Category Progress List */}
+                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover transition-all">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-inksoft mb-4">Category Breakdown</h3>
+                    {(() => {
+                      const totalCatSpending = Object.values(analytics.categoryBreakdown).reduce((sum, v) => sum + v, 0) || 1;
+                      const activeCats = Object.entries(analytics.categoryBreakdown).filter(([_, amt]) => amt > 0);
+                      
+                      if (activeCats.length === 0) {
+                        return (
+                          <div className="flex flex-col items-center justify-center h-48 text-center text-xs text-inksoft">
+                            No categorized spending logged yet.
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div className="space-y-3.5 max-h-[192px] overflow-y-auto pr-1">
+                          {activeCats
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([cat, amt]) => {
+                              const pct = (amt / totalCatSpending) * 100;
+                              return (
+                                <div key={cat} className="space-y-1">
+                                  <div className="flex justify-between text-xs font-bold text-ink">
+                                    <span>{cat}</span>
+                                    <span className="font-mono text-inksoft">{rupee(amt)} ({Math.round(pct)}%)</span>
+                                  </div>
+                                  <div className="w-full h-2 bg-paper dark:bg-paper/10 rounded-full overflow-hidden">
+                                    <div 
+                                      style={{ width: `${pct}%` }} 
+                                      className="h-full bg-brand rounded-full transition-all duration-500"
+                                    />
+                                  </div>
+                                </div>
+                              );
+                            })}
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
 
-                {/* Pending Projects (Card 4: White) */}
-                <div className="bg-card border border-line text-ink rounded-2xl p-5 shadow-sm flex flex-col justify-between h-36 transition-all hover:translate-y-[-2px] hover:shadow-card-hover">
-                  <div className="flex justify-between items-start">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-inksoft">Pending Ledgers</span>
-                    <div className="w-7 h-7 rounded-full bg-paper dark:bg-paper/10 flex items-center justify-center text-ink">
-                      <span className="text-sm font-sans font-bold">↗</span>
+                {/* Recent Expenses and Activity Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Recent Expenses Table */}
+                  <div className="bg-card border border-line rounded-2xl overflow-hidden shadow-sm hover:shadow-card-hover transition-all lg:col-span-2">
+                    <div className="px-5 py-4 border-b border-line bg-paper/10">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-inksoft">Recent Group Expenses</h3>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse min-w-[500px]">
+                        <thead>
+                          <tr className="border-b border-line text-[10px] uppercase font-bold text-inksoft bg-paper/20">
+                            <th className="px-5 py-3">Date</th>
+                            <th className="px-5 py-3">Description</th>
+                            <th className="px-5 py-3">Ledger</th>
+                            <th className="px-5 py-3">Paid By</th>
+                            <th className="px-5 py-3 text-right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-line/60 text-xs text-ink">
+                          {analytics.recentExpenses.length === 0 ? (
+                            <tr>
+                              <td colSpan="5" className="px-5 py-8 text-center text-inksoft">
+                                No recent group expenses found.
+                              </td>
+                            </tr>
+                          ) : (
+                            analytics.recentExpenses.map((exp) => (
+                              <tr key={exp._id} className="hover:bg-paper/10 transition-colors">
+                                <td className="px-5 py-3.5 text-inksoft">
+                                  {new Date(exp.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                                </td>
+                                <td className="px-5 py-3.5">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="font-bold">{exp.description}</span>
+                                    <span className="px-1.5 py-0.5 text-[8px] font-extrabold rounded-full bg-paper dark:bg-paper/10 text-brand-mint/90 border border-line uppercase">
+                                      {exp.category || "Other"}
+                                    </span>
+                                  </div>
+                                </td>
+                                <td className="px-5 py-3.5 font-semibold text-inksoft">{exp.group?.name || "Deleted Ledger"}</td>
+                                <td className="px-5 py-3.5 font-medium">{exp.paidBy?.name || "Unknown"}</td>
+                                <td className="px-5 py-3.5 text-right font-mono font-bold">{rupee(exp.amount)}</td>
+                              </tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                  <div className="text-4xl font-extrabold tracking-tight text-ink">{pendingProjects}</div>
-                  <span className="text-[10px] font-semibold text-red-500 block">Balances to settle</span>
+
+                  {/* Recent Activity Panel */}
+                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover transition-all flex flex-col h-[400px]">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-inksoft mb-4">Recent Activity</h3>
+                    <div className="space-y-4 overflow-y-auto flex-1 pr-1 custom-scrollbar">
+                      {activities.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center text-xs text-inksoft">
+                          No recent activity logs.
+                        </div>
+                      ) : (
+                        activities.map((act) => (
+                          <div key={act._id} className="flex gap-2.5 text-[11px] leading-relaxed">
+                            <div className="w-1.5 h-1.5 rounded-full bg-brand mt-1.5 shrink-0" />
+                            <div className="space-y-0.5">
+                              <p className="text-ink font-bold">{act.message}</p>
+                              <div className="text-[9px] text-inksoft font-semibold uppercase tracking-wider">
+                                {new Date(act.createdAt).toLocaleDateString("en-IN", {
+                                  day: "numeric",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
 
             {/* Groups Grid List */}

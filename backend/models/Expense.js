@@ -17,6 +17,11 @@ const expenseSchema = new mongoose.Schema(
       of: Number,
       required: true,
     },
+    category: {
+      type: String,
+      enum: ["Food", "Travel", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"],
+      default: "Other",
+    },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
