@@ -334,15 +334,15 @@ export default function Landing() {
                 {/* Nodes */}
                 {/* Node 1: Amit */}
                 <circle cx="140" cy="40" r="22" fill="var(--color-brand-soft)" stroke="var(--color-brand)" strokeWidth="2" />
-                <text x="140" y="44" textAnchor="middle" className="text-[10px] font-bold fill-brand">Amit</text>
+                <text x="140" y="44" textAnchor="middle" fill="var(--color-brand)" className="text-[10px] font-bold">Amit</text>
 
                 {/* Node 2: Rohan */}
                 <circle cx="60" cy="180" r="22" fill="var(--color-brand-soft)" stroke="var(--color-line)" strokeWidth="1.5" />
-                <text x="60" y="184" textAnchor="middle" className="text-[10px] font-bold fill-inksoft">Rohan</text>
+                <text x="60" y="184" textAnchor="middle" fill="var(--color-inksoft)" className="text-[10px] font-bold">Rohan</text>
 
                 {/* Node 3: Priya */}
                 <circle cx="220" cy="180" r="22" fill="var(--color-brand-soft)" stroke="var(--color-line)" strokeWidth="1.5" />
-                <text x="220" y="184" textAnchor="middle" className="text-[10px] font-bold fill-inksoft">Priya</text>
+                <text x="220" y="184" textAnchor="middle" fill="var(--color-inksoft)" className="text-[10px] font-bold">Priya</text>
 
                 {/* Arrow Labels */}
                 <g transform="translate(70, 130)">
