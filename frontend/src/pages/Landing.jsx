@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { 
   BookOpen, 
@@ -18,7 +18,9 @@ import {
   Github, 
   Menu, 
   X,
-  Sparkles
+  Sparkles,
+  Sun,
+  Moon
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -27,6 +29,21 @@ export default function Landing() {
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
+  
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem("ledgersplit_theme");
+    return saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("ledgersplit_theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("ledgersplit_theme", "light");
+    }
+  }, [isDark]);
 
   const toggleFaq = (index) => {
     setActiveFaq(activeFaq === index ? null : index);
@@ -81,6 +98,13 @@ export default function Landing() {
 
           {/* Action Buttons (Desktop) */}
           <div className="hidden md:flex items-center gap-3">
+            <button
+              onClick={() => setIsDark(!isDark)}
+              className="p-2.5 rounded-xl text-inksoft hover:text-ink hover:bg-paper/40 transition duration-200"
+              aria-label="Toggle Theme"
+            >
+              {isDark ? <Sun size={15} /> : <Moon size={15} />}
+            </button>
             {user ? (
               <>
                 <Link 
@@ -160,6 +184,18 @@ export default function Landing() {
               >
                 FAQs
               </a>
+            </div>
+            
+            <div className="flex items-center justify-between border-t border-line/60 pt-4 px-1">
+              <span className="text-xs font-bold text-inksoft">Theme mode</span>
+              <button
+                onClick={() => setIsDark(!isDark)}
+                className="p-2.5 rounded-xl border border-line bg-paper text-inksoft hover:text-ink transition flex items-center gap-1.5"
+                aria-label="Toggle Theme"
+              >
+                {isDark ? <Sun size={14} /> : <Moon size={14} />}
+                <span className="text-[10px] font-bold uppercase tracking-wider">{isDark ? "Light" : "Dark"}</span>
+              </button>
             </div>
             
             <div className="border-t border-line/60 pt-4 flex flex-col gap-3">
