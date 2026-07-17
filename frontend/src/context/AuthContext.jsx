@@ -39,17 +39,11 @@ export function AuthProvider({ children }) {
 
   async function register(name, email, password) {
     const res = await api.post("/auth/register", { name, email, password });
-    if (res.data.token) {
-      localStorage.setItem("ledgersplit_token", res.data.token);
-      setUser(res.data.user);
-    }
     return res.data;
   }
 
   async function verifyEmail(email, otp) {
     const res = await api.post("/auth/verify-email", { email, otp });
-    localStorage.setItem("ledgersplit_token", res.data.token);
-    setUser(res.data.user);
     return res.data;
   }
 

@@ -76,7 +76,8 @@ export default function Register() {
         setMode("verify_email");
         setError("Please enter the verification OTP sent to your email.");
       } else {
-        navigate("/dashboard");
+        toast("Registration successful! Please log in.", "success");
+        navigate("/login");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed");
@@ -91,7 +92,8 @@ export default function Register() {
     setLoading(true);
     try {
       await verifyEmail(email, otp);
-      navigate("/dashboard");
+      toast("Email verified successfully! Please log in.", "success");
+      navigate("/login");
     } catch (err) {
       setError(err.response?.data?.message || "OTP verification failed");
     } finally {
