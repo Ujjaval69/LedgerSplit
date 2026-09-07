@@ -8,7 +8,7 @@ import {
   TrendingDown, 
   Scale, 
   ArrowRight, 
-  CheckCircle, 
+  CheckCircle2, 
   Lock, 
   Zap, 
   FileSpreadsheet, 
@@ -20,15 +20,26 @@ import {
   X,
   Sparkles,
   Sun,
-  Moon
+  Moon,
+  Sliders,
+  ShieldCheck,
+  Check
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+
+function rupee(n) {
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
 
 export default function Landing() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
+  
+  // Interactive Sandbox Demo State
+  const [demoAmount, setDemoAmount] = useState(6000);
+  const [demoPayer, setDemoPayer] = useState("Aarav");
   
   const [isDark, setIsDark] = useState(() => {
     const saved = localStorage.getItem("ledgersplit_theme");
@@ -49,215 +60,222 @@ export default function Landing() {
     setActiveFaq(activeFaq === index ? null : index);
   };
 
+  const sharePerPerson = Math.round(demoAmount / 3);
+  const demoMembers = [
+    { name: "Aarav", role: demoPayer === "Aarav" ? "Payer" : "Member", x: 140, y: 36 },
+    { name: "Rohan", role: demoPayer === "Rohan" ? "Payer" : "Member", x: 50, y: 180 },
+    { name: "Priya", role: demoPayer === "Priya" ? "Payer" : "Member", x: 230, y: 180 },
+  ];
+
   const faqs = [
     {
-      q: "How does the bill simplification algorithm work?",
-      a: "Our algorithm automatically analyzes the balances within a group (who paid what and who owes what) and calculates the minimum possible transactions needed to settle everyone up. For example, if Priya owes Rohan ₹500, and Rohan owes Amit ₹500, we simplify this so Priya pays Amit ₹500 directly, bypassing Rohan completely."
+      q: "How does the Min-Cash-Flow graph algorithm work?",
+      a: "Our algorithm calculates net balances for all members (total credit minus total debit). It then pairs the largest net debtor with the largest net creditor in a greedy matching cycle. For example, if Priya owes Rohan ₹500, and Rohan owes Aarav ₹500, the system collapses the cycle into 1 direct payment from Priya to Aarav, bypassing intermediary transfers entirely."
     },
     {
-      q: "Can I upload my transactions from split sheets?",
-      a: "Yes! Our premium CSV Expense Import lets you drop standard transaction spreadsheets directly into any ledger. It automatically parses columns for description, amount, category, date, and members to create bulk logs instantly."
+      q: "Can I batch import historical expenses from spreadsheets?",
+      a: "Yes. Our client-side CSV parser lets you drop standard transaction exports from Google Sheets or Excel directly into any ledger. It automatically validates columns for description, amount, category, date, and member names to create verified ledger entries in seconds."
     },
     {
-      q: "Is my ledger data safe and private?",
-      a: "Absolutely. We protect all ledger traffic with end-to-end SSL encryption. Session states are guarded using secure HTTP-only cookies and automatic JWT expiry handlers to ensure you are never exposed."
+      q: "How does offline detection safeguard my calculations?",
+      a: "LedgerSplit includes native browser connectivity listeners. If your mobile network drops in an underground cafe or flight, a sticky notification informs you immediately, queuing client operations until your connection is restored."
     },
     {
-      q: "Does the application support offline usage?",
-      a: "Yes, LedgerSplit includes built-in offline status detection. If your internet connection drops while you are calculating shares, a sticky alert notifies you immediately so no actions are lost."
+      q: "Is financial and ledger data kept private?",
+      a: "All network traffic is encrypted via 256-bit TLS/SSL. Authentication uses signed JWT tokens with automated response interceptors that invalidate client state immediately upon expiration, preventing unauthorized session persistence."
     }
   ];
 
   return (
-    <div className="min-h-screen bg-paper text-ink selection:bg-brand/10 selection:text-brand transition-colors duration-200">
+    <div className="min-h-screen bg-paper text-ink selection:bg-brand-soft selection:text-brand transition-colors duration-200">
       
-      {/* Dynamic Hero Glow Layer */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-[600px] bg-gradient-to-b from-brand/5 via-transparent to-transparent blur-3xl pointer-events-none -z-10" />
+      {/* Dynamic Ambient Background Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[520px] bg-gradient-to-b from-brand/10 via-transparent to-transparent blur-3xl pointer-events-none -z-10" />
 
-      {/* Navigation Bar */}
-      <nav className="sticky top-0 z-50 bg-paper/85 backdrop-blur-md border-b border-line transition-all duration-200">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-xl bg-brand flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform duration-200">
-              <Scale size={18} className="rotate-12 group-hover:rotate-0 transition-transform duration-200" />
-            </div>
-            <span className="font-sans font-extrabold text-lg tracking-tight text-ink">
-              Ledger<span className="text-brand-mint">Split</span>
-            </span>
-          </Link>
-
-          {/* Nav Anchor Links (Desktop) */}
-          <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-xs font-bold text-inksoft hover:text-ink transition-colors">Features</a>
-            <a href="#simplification" className="text-xs font-bold text-inksoft hover:text-ink transition-colors">Simplifier</a>
-            <a href="#security" className="text-xs font-bold text-inksoft hover:text-ink transition-colors">Security</a>
-            <a href="#faq" className="text-xs font-bold text-inksoft hover:text-ink transition-colors">FAQs</a>
+      {/* Floating Glass Pill Navigation Bar */}
+      <nav className="fixed top-4 left-1/2 -translate-x-1/2 w-[92%] max-w-5xl z-50 bg-card/85 backdrop-blur-xl border border-line rounded-full px-5 py-2.5 shadow-glass flex items-center justify-between transition-all duration-200">
+        
+        {/* Brand Monogram & Name */}
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform duration-200">
+            <BookOpen size={14} className="text-white" />
           </div>
+          <span className="font-sans font-extrabold text-sm tracking-tight text-ink">
+            Ledger<span className="text-brand">Split</span>
+          </span>
+        </Link>
 
-          {/* Action Buttons (Desktop) */}
-          <div className="hidden md:flex items-center gap-3">
+        {/* Desktop Anchor Navigation */}
+        <div className="hidden md:flex items-center gap-7">
+          <a href="#demo" className="text-xs font-semibold text-inksoft hover:text-ink transition-colors">Interactive Demo</a>
+          <a href="#features" className="text-xs font-semibold text-inksoft hover:text-ink transition-colors">Capabilities</a>
+          <a href="#simplification" className="text-xs font-semibold text-inksoft hover:text-ink transition-colors">Algorithm</a>
+          <a href="#faq" className="text-xs font-semibold text-inksoft hover:text-ink transition-colors">FAQ</a>
+        </div>
+
+        {/* Action Buttons & Theme Switcher */}
+        <div className="hidden md:flex items-center gap-2.5">
+          <button
+            onClick={() => setIsDark(!isDark)}
+            className="p-2 rounded-full text-inksoft hover:text-ink hover:bg-paper transition duration-150"
+            aria-label="Toggle Theme"
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDark ? <Sun size={15} className="text-amber-400" /> : <Moon size={15} />}
+          </button>
+          
+          {user ? (
+            <div className="flex items-center gap-2">
+              <Link 
+                to="/dashboard" 
+                className="inline-flex items-center justify-center bg-brand text-white px-4 py-1.5 rounded-full font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition-all"
+              >
+                Dashboard
+              </Link>
+              <button 
+                onClick={() => {
+                  logout();
+                  navigate("/");
+                }}
+                className="text-xs font-semibold text-inksoft hover:text-ink px-3 py-1.5 rounded-full border border-line hover:bg-paper transition"
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link 
+                to="/login" 
+                className="text-xs font-semibold text-inksoft hover:text-ink px-3 py-1.5 transition"
+              >
+                Sign in
+              </Link>
+              <Link 
+                to="/register" 
+                className="inline-flex items-center justify-center bg-brand text-white px-4 py-1.5 rounded-full font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition-all"
+              >
+                Open Ledger
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Menu Toggle Button */}
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden text-inksoft hover:text-ink p-1.5 rounded-full transition"
+          aria-label="Toggle menu"
+        >
+          {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+
+      </nav>
+
+      {/* Mobile Drawer Slide-Down */}
+      {mobileMenuOpen && (
+        <div className="md:hidden fixed top-20 left-4 right-4 z-50 bg-card/95 backdrop-blur-2xl border border-line rounded-3xl p-6 shadow-2xl space-y-4 animate-scaleIn">
+          <div className="flex flex-col gap-3">
+            <a 
+              href="#demo" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-semibold text-inksoft hover:text-ink"
+            >
+              Interactive Demo
+            </a>
+            <a 
+              href="#features" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-semibold text-inksoft hover:text-ink"
+            >
+              Capabilities
+            </a>
+            <a 
+              href="#simplification" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-semibold text-inksoft hover:text-ink"
+            >
+              Algorithm
+            </a>
+            <a 
+              href="#faq" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-sm font-semibold text-inksoft hover:text-ink"
+            >
+              FAQ
+            </a>
+          </div>
+          
+          <div className="flex items-center justify-between border-t border-line pt-4">
+            <span className="text-xs font-bold text-inksoft">Theme Mode</span>
             <button
               onClick={() => setIsDark(!isDark)}
-              className="p-2.5 rounded-xl text-inksoft hover:text-ink hover:bg-paper/40 transition duration-200"
-              aria-label="Toggle Theme"
+              className="px-3 py-1.5 rounded-xl border border-line bg-paper text-inksoft hover:text-ink transition flex items-center gap-1.5"
             >
-              {isDark ? <Sun size={15} /> : <Moon size={15} />}
+              {isDark ? <Sun size={13} className="text-amber-400" /> : <Moon size={13} />}
+              <span className="text-[10px] font-mono font-bold uppercase">{isDark ? "Light" : "Dark"}</span>
             </button>
+          </div>
+          
+          <div className="border-t border-line pt-4 flex flex-col gap-2.5">
             {user ? (
               <>
                 <Link 
                   to="/dashboard" 
-                  className="inline-flex items-center justify-center bg-brand text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full bg-brand text-white py-2.5 rounded-xl font-bold text-xs text-center shadow-sm"
                 >
-                  Dashboard
+                  Go to Dashboard
                 </Link>
                 <button 
                   onClick={() => {
                     logout();
+                    setMobileMenuOpen(false);
                     navigate("/");
                   }}
-                  className="inline-flex items-center justify-center border border-line bg-card hover:bg-paper text-inksoft hover:text-ink px-4 py-2 rounded-xl font-bold text-xs transition"
+                  className="w-full border border-line bg-paper text-inksoft py-2.5 rounded-xl font-bold text-xs text-center"
                 >
-                  Log Out
+                  Sign Out
                 </button>
               </>
             ) : (
               <>
                 <Link 
                   to="/login" 
-                  className="text-xs font-bold text-inksoft hover:text-ink px-3 py-2 transition"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full border border-line bg-paper text-ink py-2.5 rounded-xl font-bold text-xs text-center"
                 >
-                  Log In
+                  Sign In
                 </Link>
                 <Link 
                   to="/register" 
-                  className="inline-flex items-center justify-center bg-brand text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm hover:opacity-90 active:scale-95 transition-all"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full bg-brand text-white py-2.5 rounded-xl font-bold text-xs text-center shadow-sm"
                 >
-                  Get Started
+                  Get Started Free
                 </Link>
               </>
             )}
           </div>
-
-          {/* Mobile Menu Toggle */}
-          <button 
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden text-inksoft hover:text-ink p-1 rounded-lg transition"
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-
         </div>
-
-        {/* Mobile Menu Panel */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-card border-b border-line px-6 py-5 space-y-4 animate-fadeIn">
-            <div className="flex flex-col gap-3.5">
-              <a 
-                href="#features" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-sm font-semibold text-inksoft hover:text-ink"
-              >
-                Features
-              </a>
-              <a 
-                href="#simplification" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-sm font-semibold text-inksoft hover:text-ink"
-              >
-                Simplifier
-              </a>
-              <a 
-                href="#security" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-sm font-semibold text-inksoft hover:text-ink"
-              >
-                Security
-              </a>
-              <a 
-                href="#faq" 
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-sm font-semibold text-inksoft hover:text-ink"
-              >
-                FAQs
-              </a>
-            </div>
-            
-            <div className="flex items-center justify-between border-t border-line/60 pt-4 px-1">
-              <span className="text-xs font-bold text-inksoft">Theme mode</span>
-              <button
-                onClick={() => setIsDark(!isDark)}
-                className="p-2.5 rounded-xl border border-line bg-paper text-inksoft hover:text-ink transition flex items-center gap-1.5"
-                aria-label="Toggle Theme"
-              >
-                {isDark ? <Sun size={14} /> : <Moon size={14} />}
-                <span className="text-[10px] font-bold uppercase tracking-wider">{isDark ? "Light" : "Dark"}</span>
-              </button>
-            </div>
-            
-            <div className="border-t border-line/60 pt-4 flex flex-col gap-3">
-              {user ? (
-                <>
-                  <Link 
-                    to="/dashboard" 
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full bg-brand text-white py-2.5 rounded-xl font-bold text-xs text-center shadow-sm"
-                  >
-                    Dashboard
-                  </Link>
-                  <button 
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                      navigate("/");
-                    }}
-                    className="w-full border border-line bg-paper text-inksoft py-2.5 rounded-xl font-bold text-xs text-center"
-                  >
-                    Log Out
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link 
-                    to="/login" 
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full border border-line bg-paper text-ink py-2.5 rounded-xl font-bold text-xs text-center"
-                  >
-                    Log In
-                  </Link>
-                  <Link 
-                    to="/register" 
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full bg-brand text-white py-2.5 rounded-xl font-bold text-xs text-center shadow-sm"
-                  >
-                    Get Started
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-      </nav>
+      )}
 
       {/* Hero Section */}
-      <header className="max-w-7xl mx-auto px-6 pt-16 pb-20 sm:pt-24 sm:pb-28 text-center space-y-8">
+      <header className="max-w-6xl mx-auto px-6 pt-32 pb-20 sm:pt-40 sm:pb-24 text-center space-y-8">
         
-        {/* Banner Pill */}
-        <div className="inline-flex items-center gap-1.5 bg-brand-soft dark:bg-brand-soft/20 text-brand dark:text-brand-mint text-[11px] font-bold px-3 py-1.5 rounded-full border border-brand/10 dark:border-brand-mint/20 animate-fadeInUp">
-          <Sparkles size={12} />
-          <span>Automated expense tracking with visual simplify charts</span>
+        {/* Editorial Subtitle Pill */}
+        <div className="inline-flex items-center gap-2 bg-brand-soft text-brand dark:bg-brand-soft dark:text-brand text-[10px] font-mono font-bold px-3.5 py-1 rounded-full border border-brand/20 animate-fadeInUp">
+          <Sparkles size={11} />
+          <span className="tracking-widest uppercase">FINANCIAL SIMPLIFICATION ENGINE</span>
         </div>
 
-        {/* Hero Typography */}
-        <div className="max-w-3xl mx-auto space-y-5">
-          <h1 className="font-sans text-4xl sm:text-6xl font-extrabold tracking-tight text-ink leading-[1.1] animate-fadeInUp">
-            Split bills, <span className="text-brand">not friendships.</span>
+        {/* High-Impact Hero Typography */}
+        <div className="max-w-3xl mx-auto space-y-4">
+          <h1 className="font-sans text-4xl sm:text-6xl font-extrabold tracking-tight text-ink leading-[1.08] animate-fadeInUp">
+            Mathematically optimal <br className="hidden sm:inline" />
+            <span className="text-brand">group settlements.</span>
           </h1>
-          <p className="text-sm sm:text-base text-inksoft font-medium leading-relaxed max-w-2xl mx-auto animate-fadeInUp" style={{ animationDelay: "100ms" }}>
-            LedgerSplit simplifies group expenses, records split shares in real-time, and reduces transaction webs to simplified settlement payment paths.
+          <p className="text-sm sm:text-base text-inksoft font-medium leading-relaxed max-w-xl mx-auto animate-fadeInUp" style={{ animationDelay: "100ms" }}>
+            Split bills, not friendships. LedgerSplit reduces complex multi-party debt webs into direct, minimum-transaction settlement payments.
           </p>
         </div>
 
@@ -266,98 +284,187 @@ export default function Landing() {
           {user ? (
             <Link 
               to="/dashboard" 
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:opacity-95 active:scale-98 transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-white px-7 py-3 rounded-full font-bold text-xs shadow-sm hover:opacity-95 active:scale-98 transition-all"
             >
-              Go to Dashboard <ArrowRight size={16} />
+              Enter Dashboard <ArrowRight size={14} />
             </Link>
           ) : (
             <>
               <Link 
                 to="/register" 
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-white px-6 py-3 rounded-xl font-bold text-sm shadow-md hover:opacity-95 active:scale-98 transition-all"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-brand text-white px-7 py-3 rounded-full font-bold text-xs shadow-sm hover:opacity-95 active:scale-98 transition-all"
               >
-                Sign Up for Free <ArrowRight size={16} />
+                Open Free Ledger <ArrowRight size={14} />
               </Link>
               <Link 
                 to="/login" 
-                className="w-full sm:w-auto inline-flex items-center justify-center border border-line bg-card hover:bg-paper text-ink px-6 py-3 rounded-xl font-bold text-sm transition"
+                className="w-full sm:w-auto inline-flex items-center justify-center border border-line bg-card hover:bg-paper text-ink px-7 py-3 rounded-full font-bold text-xs transition"
               >
-                Log In
+                Sign In
               </Link>
             </>
           )}
         </div>
 
-        {/* Visual Interactive IOU Showcase */}
-        <div className="max-w-4xl mx-auto pt-8 animate-fadeInUp" style={{ animationDelay: "200ms" }}>
-          <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden flex flex-col md:flex-row items-center gap-8">
+        {/* Interactive Splitting Demonstration Sandbox (The Live Micro-Sandbox) */}
+        <div id="demo" className="max-w-4xl mx-auto pt-10 animate-fadeInUp" style={{ animationDelay: "200ms" }}>
+          <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-card relative overflow-hidden text-left">
             
-            {/* Left Side: Mock simplified ledger info */}
-            <div className="flex-1 text-left space-y-4">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-brand">Real-Time simplification</span>
-              <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight">Reduce 3 transactions to just 1 direct payment.</h2>
-              <p className="text-xs text-inksoft leading-relaxed">
-                Our visual flowchart mapping reduces transaction overlapping webs to save everyone transfer fees and time.
-              </p>
-              
-              <div className="space-y-2 border-t border-line/60 pt-4">
-                <div className="flex items-center gap-2 text-xs text-ink">
-                  <CheckCircle size={14} className="text-brand-mint shrink-0" />
-                  <span>Simplify active balances instantly.</span>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-ink">
-                  <CheckCircle size={14} className="text-brand-mint shrink-0" />
-                  <span>Interactive node colors generated dynamically.</span>
-                </div>
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-line">
+              <div>
+                <span className="text-[9px] font-mono uppercase tracking-widest text-brand font-bold">INTERACTIVE PROOF SANDBOX</span>
+                <h3 className="text-lg sm:text-xl font-bold text-ink mt-0.5">Test the Simplification Engine in Real Time</h3>
+                <p className="text-xs text-inksoft mt-1">
+                  Adjust the bill amount and choose who paid to watch cyclic debts collapse instantly.
+                </p>
+              </div>
+
+              {/* Payer Selector Segmented Tabs */}
+              <div className="flex items-center gap-1 bg-paper border border-line rounded-xl p-1 shrink-0">
+                {["Aarav", "Rohan", "Priya"].map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => setDemoPayer(name)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                      demoPayer === name
+                        ? "bg-brand text-white shadow-sm"
+                        : "text-inksoft hover:text-ink"
+                    }`}
+                  >
+                    {name} Paid
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Right Side: Graph SVG Showcase */}
-            <div className="w-full md:w-80 h-72 border border-line rounded-2xl bg-paper/50 flex items-center justify-center overflow-hidden shrink-0 relative">
-              <svg width="280" height="280" className="overflow-visible">
-                {/* Curve Connectors */}
-                <path 
-                  d="M 140 40 Q 75 140 140 240" 
-                  fill="none" 
-                  stroke="var(--color-brand)" 
-                  strokeWidth="2" 
-                  strokeDasharray="4 4"
-                  className="animate-pulse"
-                />
-                <path 
-                  d="M 140 240 Q 205 140 140 40" 
-                  fill="none" 
-                  stroke="var(--color-line)" 
-                  strokeWidth="1.5" 
-                />
-
-                {/* Nodes */}
-                {/* Node 1: Amit */}
-                <circle cx="140" cy="40" r="22" fill="var(--color-brand-soft)" stroke="var(--color-brand)" strokeWidth="2" />
-                <text x="140" y="44" textAnchor="middle" fill="var(--color-brand)" className="text-[10px] font-bold">Amit</text>
-
-                {/* Node 2: Rohan */}
-                <circle cx="60" cy="180" r="22" fill="var(--color-brand-soft)" stroke="var(--color-line)" strokeWidth="1.5" />
-                <text x="60" y="184" textAnchor="middle" fill="var(--color-inksoft)" className="text-[10px] font-bold">Rohan</text>
-
-                {/* Node 3: Priya */}
-                <circle cx="220" cy="180" r="22" fill="var(--color-brand-soft)" stroke="var(--color-line)" strokeWidth="1.5" />
-                <text x="220" y="184" textAnchor="middle" fill="var(--color-inksoft)" className="text-[10px] font-bold">Priya</text>
-
-                {/* Arrow Labels */}
-                <g transform="translate(70, 130)">
-                  <rect x="-24" y="-8" width="48" height="16" rx="4" fill="var(--color-card)" stroke="var(--color-line)" strokeWidth="1" />
-                  <text textAnchor="middle" y="3" className="text-[8px] font-bold fill-red-500">-₹500</text>
-                </g>
-                <g transform="translate(210, 130)">
-                  <rect x="-24" y="-8" width="48" height="16" rx="4" fill="var(--color-card)" stroke="var(--color-line)" strokeWidth="1" />
-                  <text textAnchor="middle" y="3" className="text-[8px] font-bold fill-brand">+₹500</text>
-                </g>
-              </svg>
+            {/* Slider & Graph Canvas */}
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center pt-6">
               
-              <div className="absolute bottom-3 left-3 right-3 bg-card border border-line px-3 py-1.5 rounded-xl shadow-sm text-center text-[9px] font-bold text-inksoft uppercase tracking-wider">
-                Simplified settlement flow view
+              {/* Left Controls & Metrics */}
+              <div className="md:col-span-6 space-y-6">
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-xs font-bold text-inksoft uppercase tracking-wider">
+                      Shared Bill Amount
+                    </label>
+                    <span className="font-mono text-xl font-extrabold text-brand ls-mono">
+                      {rupee(demoAmount)}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="1500"
+                    max="15000"
+                    step="1500"
+                    value={demoAmount}
+                    onChange={(e) => setDemoAmount(parseInt(e.target.value))}
+                    className="w-full h-2 bg-paper rounded-lg appearance-none cursor-pointer accent-brand border border-line"
+                  />
+                  <div className="flex justify-between text-[10px] font-mono text-inksoft/60 mt-1">
+                    <span>₹1,500</span>
+                    <span>₹7,500</span>
+                    <span>₹15,000</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div className="border border-line rounded-2xl p-3.5 bg-paper/40">
+                    <span className="text-[10px] uppercase font-mono font-bold text-inksoft">Per Person Share</span>
+                    <div className="font-mono text-base font-extrabold text-ink mt-0.5 ls-mono">
+                      {rupee(sharePerPerson)}
+                    </div>
+                    <span className="text-[9px] text-inksoft/80 font-medium">Split evenly across 3</span>
+                  </div>
+
+                  <div className="border border-brand/20 rounded-2xl p-3.5 bg-brand-soft">
+                    <span className="text-[10px] uppercase font-mono font-bold text-brand">Direct Transfers</span>
+                    <div className="font-mono text-base font-extrabold text-brand mt-0.5 ls-mono">
+                      2 Transfers
+                    </div>
+                    <span className="text-[9px] text-brand/80 font-medium">6 redundant loops saved</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 border-t border-line pt-4 text-xs">
+                  <div className="flex items-center gap-2 text-ink">
+                    <CheckCircle2 size={14} className="text-brand shrink-0" />
+                    <span><strong>{demoPayer}</strong> is credited {rupee(demoAmount - sharePerPerson)}.</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-ink">
+                    <CheckCircle2 size={14} className="text-brand shrink-0" />
+                    <span>Remaining 2 members each pay only {rupee(sharePerPerson)} directly.</span>
+                  </div>
+                </div>
               </div>
+
+              {/* Right Visual Flowchart SVG */}
+              <div className="md:col-span-6 flex items-center justify-center">
+                <div className="w-full max-w-xs h-64 border border-line rounded-2xl bg-paper/30 flex items-center justify-center relative overflow-hidden">
+                  <svg width="280" height="240" className="overflow-visible">
+                    {/* Circle guide outline */}
+                    <circle cx="140" cy="120" r="75" fill="none" stroke="var(--color-line)" strokeWidth="1" strokeDasharray="3 3" />
+
+                    {/* Dynamic Bezier Transfer Lines pointing toward the payer */}
+                    {demoMembers.filter(m => m.name !== demoPayer).map((m, idx) => {
+                      const payerObj = demoMembers.find(p => p.name === demoPayer);
+                      return (
+                        <g key={idx}>
+                          <path
+                            d={`M ${m.x} ${m.y} Q 140 120 ${payerObj.x} ${payerObj.y}`}
+                            fill="none"
+                            stroke="var(--color-brand)"
+                            strokeWidth="2.5"
+                            strokeDasharray="4 4"
+                            className="animate-pulse"
+                          />
+                        </g>
+                      );
+                    })}
+
+                    {/* Member Nodes */}
+                    {demoMembers.map((m, idx) => {
+                      const isPayer = m.name === demoPayer;
+                      return (
+                        <g key={idx}>
+                          <circle
+                            cx={m.x}
+                            cy={m.y}
+                            r="22"
+                            fill={isPayer ? "var(--color-brand)" : "var(--color-card)"}
+                            stroke={isPayer ? "var(--color-brand)" : "var(--color-line)"}
+                            strokeWidth="2"
+                            className="transition-all duration-300"
+                          />
+                          <text
+                            x={m.x}
+                            y={m.y + 4}
+                            textAnchor="middle"
+                            fill={isPayer ? "#FFFFFF" : "var(--color-ink)"}
+                            className="text-[10px] font-bold select-none pointer-events-none"
+                          >
+                            {m.name.charAt(0)}
+                          </text>
+                          <text
+                            x={m.x}
+                            y={m.y + 34}
+                            textAnchor="middle"
+                            fill="var(--color-inksoft)"
+                            className="text-[9px] font-mono font-semibold select-none"
+                          >
+                            {m.name}
+                          </text>
+                        </g>
+                      );
+                    })}
+                  </svg>
+
+                  <div className="absolute bottom-2.5 bg-card/90 backdrop-blur-md border border-line px-3 py-1 rounded-full text-[9px] font-mono font-bold text-inksoft uppercase tracking-wider shadow-sm">
+                    {demoPayer} receives direct net transfers
+                  </div>
+                </div>
+              </div>
+
             </div>
 
           </div>
@@ -365,192 +472,211 @@ export default function Landing() {
 
       </header>
 
-      {/* Features Grid Section */}
-      <section id="features" className="max-w-7xl mx-auto px-6 py-20 border-t border-line/60 space-y-12">
+      {/* Bento-Grid Capabilities Showcase Section */}
+      <section id="features" className="max-w-6xl mx-auto px-6 py-24 border-t border-line space-y-12">
         
-        {/* Title */}
+        {/* Section Heading */}
         <div className="text-center max-w-xl mx-auto space-y-2">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-brand">Premium Toolkit</span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-ink tracking-tight">Everything you need to stay settled up.</h2>
+          <span className="text-[10px] font-mono uppercase tracking-widest text-brand font-bold">ARCHITECTURAL TOOLKIT</span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">Everything required for effortless group accounting.</h2>
           <p className="text-xs sm:text-sm text-inksoft">
-            Designed to save time and secure transaction clarity.
+            Engineered with high performance, precision math, and zero clutter.
           </p>
         </div>
 
-        {/* Grid List */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           
-          {/* Card 1 */}
-          <div className="bg-card border border-line rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-card-hover transition-all duration-200">
-            <div className="w-9 h-9 rounded-xl bg-brand-soft text-brand flex items-center justify-center">
-              <Zap size={18} />
+          {/* Bento Card 1 (Span 2): Min Cash Flow Algorithm */}
+          <div className="md:col-span-2 bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-card flex flex-col justify-between hover:shadow-card-hover transition-all duration-200">
+            <div className="space-y-2 mb-6">
+              <div className="w-8 h-8 rounded-xl bg-brand-soft text-brand flex items-center justify-center mb-4">
+                <Zap size={16} />
+              </div>
+              <h3 className="text-base font-bold text-ink">Greedy Min-Cash-Flow Optimization</h3>
+              <p className="text-xs text-inksoft leading-relaxed max-w-md">
+                Solves cyclic bilateral debts with a graph-based reduction algorithm, minimizing the number of distinct transactions required to square away group balances.
+              </p>
             </div>
-            <h3 className="text-sm font-bold text-ink">Bill Simplification Algorithm</h3>
-            <p className="text-xs text-inksoft leading-relaxed">
-              Calculates shortest transfer paths across multiple group users to settle active balances directly.
-            </p>
+
+            {/* Visual Artifact: Interactive Path Mini-Chart */}
+            <div className="border border-line rounded-2xl p-4 bg-paper/40 flex items-center justify-between text-xs font-mono">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-ink font-semibold">Trips & Shared Flats</span>
+              </div>
+              <span className="text-brand font-bold">O(N) Complexity</span>
+            </div>
           </div>
 
-          {/* Card 2 */}
-          <div className="bg-card border border-line rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-card-hover transition-all duration-200">
-            <div className="w-9 h-9 rounded-xl bg-brand-soft text-brand flex items-center justify-center">
-              <FileSpreadsheet size={18} />
+          {/* Bento Card 2 (Span 1): CSV Ingestion Engine */}
+          <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-card flex flex-col justify-between hover:shadow-card-hover transition-all duration-200">
+            <div className="space-y-2 mb-6">
+              <div className="w-8 h-8 rounded-xl bg-brand-soft text-brand flex items-center justify-center mb-4">
+                <FileSpreadsheet size={16} />
+              </div>
+              <h3 className="text-base font-bold text-ink">In-Browser CSV Parser</h3>
+              <p className="text-xs text-inksoft leading-relaxed">
+                Drop standard transaction exports directly into any ledger to batch-import dozens of records asynchronously.
+              </p>
             </div>
-            <h3 className="text-sm font-bold text-ink">Spreadsheet CSV Imports</h3>
-            <p className="text-xs text-inksoft leading-relaxed">
-              Upload split sheet files directly into active ledgers to batch import expense records instantly.
-            </p>
+
+            {/* Visual Artifact: Mock Spreadsheet Row */}
+            <div className="border border-line rounded-xl p-3 bg-paper/40 space-y-1.5 text-[10px] font-mono">
+              <div className="flex justify-between text-inksoft">
+                <span>DINNER_EXP.CSV</span>
+                <span className="text-brand font-bold">PARSED ✓</span>
+              </div>
+              <div className="w-full bg-line h-1 rounded-full overflow-hidden">
+                <div className="bg-brand h-full w-full" />
+              </div>
+            </div>
           </div>
 
-          {/* Card 3 */}
-          <div className="bg-card border border-line rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-card-hover transition-all duration-200">
-            <div className="w-9 h-9 rounded-xl bg-brand-soft text-brand flex items-center justify-center">
-              <Paperclip size={18} />
+          {/* Bento Card 3 (Span 1): Receipt Inspection */}
+          <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-card flex flex-col justify-between hover:shadow-card-hover transition-all duration-200">
+            <div className="space-y-2 mb-6">
+              <div className="w-8 h-8 rounded-xl bg-brand-soft text-brand flex items-center justify-center mb-4">
+                <Paperclip size={16} />
+              </div>
+              <h3 className="text-base font-bold text-ink">Invoice & Receipt Lightbox</h3>
+              <p className="text-xs text-inksoft leading-relaxed">
+                Attach digital bill proofs to expenses and inspect invoices within a responsive fullscreen modal preview.
+              </p>
             </div>
-            <h3 className="text-sm font-bold text-ink">Receipt Attachments</h3>
-            <p className="text-xs text-inksoft leading-relaxed">
-              Attach bill invoice images to verify transactions and preview them inside a fullscreen preview modal.
-            </p>
+
+            {/* Visual Artifact: Receipt Pill */}
+            <div className="border border-line rounded-xl p-2.5 bg-paper/40 flex items-center justify-between text-[11px] font-semibold text-ink">
+              <span>Tax_Invoice_#412.pdf</span>
+              <span className="text-[9px] font-mono font-bold text-brand bg-brand-soft px-1.5 py-0.5 rounded">VIEW</span>
+            </div>
           </div>
 
-          {/* Card 4 */}
-          <div className="bg-card border border-line rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-card-hover transition-all duration-200">
-            <div className="w-9 h-9 rounded-xl bg-brand-soft text-brand flex items-center justify-center">
-              <BookOpen size={18} />
+          {/* Bento Card 4 (Span 2): Audit Activity Timeline */}
+          <div className="md:col-span-2 bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-card flex flex-col justify-between hover:shadow-card-hover transition-all duration-200">
+            <div className="space-y-2 mb-6">
+              <div className="w-8 h-8 rounded-xl bg-brand-soft text-brand flex items-center justify-center mb-4">
+                <BookOpen size={16} />
+              </div>
+              <h3 className="text-base font-bold text-ink">Paginated Audit Timeline</h3>
+              <p className="text-xs text-inksoft leading-relaxed max-w-md">
+                Audit historical modifications with server-side skip/limit pagination, member filtering, and date-sorted transaction transparency.
+              </p>
             </div>
-            <h3 className="text-sm font-bold text-ink">Paginated Activity Logs</h3>
-            <p className="text-xs text-inksoft leading-relaxed">
-              Track who added, modified, or deleted entries with support for pagination and member filters.
-            </p>
-          </div>
 
-          {/* Card 5 */}
-          <div className="bg-card border border-line rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-card-hover transition-all duration-200">
-            <div className="w-9 h-9 rounded-xl bg-brand-soft text-brand flex items-center justify-center">
-              <Globe size={18} />
+            {/* Visual Artifact: Mini Activity Rows */}
+            <div className="space-y-2 text-xs font-medium">
+              <div className="flex items-center justify-between p-2.5 rounded-xl border border-line bg-paper/40">
+                <div className="flex items-center gap-2">
+                  <div className="w-5 h-5 rounded-full bg-brand text-white flex items-center justify-center text-[9px] font-bold">R</div>
+                  <span className="text-ink">Rohan settled with Aarav</span>
+                </div>
+                <span className="font-mono text-emerald-600 font-bold ls-mono">₹2,000</span>
+              </div>
             </div>
-            <h3 className="text-sm font-bold text-ink">Offline Status Banner</h3>
-            <p className="text-xs text-inksoft leading-relaxed">
-              Auto-detects when you lose internet connection and displays a warning banner to safeguard input details.
-            </p>
-          </div>
-
-          {/* Card 6 */}
-          <div className="bg-card border border-line rounded-2xl p-5 shadow-sm space-y-4 hover:shadow-card-hover transition-all duration-200">
-            <div className="w-9 h-9 rounded-xl bg-brand-soft text-brand flex items-center justify-center">
-              <Lock size={18} />
-            </div>
-            <h3 className="text-sm font-bold text-ink">Secure Session Tokens</h3>
-            <p className="text-xs text-inksoft leading-relaxed">
-              Monitors authentication sessions using token response interceptors to log you out safely on JWT expiration.
-            </p>
           </div>
 
         </div>
 
       </section>
 
-      {/* Simplification Explanation Section */}
-      <section id="simplification" className="max-w-7xl mx-auto px-6 py-20 border-t border-line/60 flex flex-col lg:flex-row items-center gap-12">
+      {/* Simplification Math Explanation Section */}
+      <section id="simplification" className="max-w-6xl mx-auto px-6 py-24 border-t border-line flex flex-col lg:flex-row items-center gap-12">
         <div className="flex-1 space-y-5 text-left">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-brand">Algorithm details</span>
-          <h2 className="text-2xl sm:text-3xl font-bold text-ink tracking-tight">How we simplify debts.</h2>
+          <span className="text-[10px] font-mono uppercase tracking-widest text-brand font-bold">THE SETTLEMENT ALGORITHM</span>
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">How we collapse debt cycles.</h2>
           <p className="text-xs sm:text-sm text-inksoft leading-relaxed">
-            Standard debt tracking splits each card payment into separate peer-to-peer transfers, creating a complex web of transactions. 
+            Conventional split trackers track each bill as an isolated bilateral transaction. When 5 friends split 15 group meals, dozens of small, overlapping payments are created.
           </p>
           <p className="text-xs sm:text-sm text-inksoft leading-relaxed">
-            LedgerSplit resolves this by netting positive and negative balances within the ledger group, and then pairing the largest debtors with the largest creditors to resolve everyone in a minimum number of steps.
+            LedgerSplit resolves this mathematically by netting all member balances into a clean directed cash-flow graph, solving for the absolute minimum number of settlement steps.
           </p>
           
           <div className="grid grid-cols-2 gap-4 pt-2">
-            <div className="border border-line rounded-xl p-4 bg-card shadow-sm">
-              <h4 className="text-lg font-extrabold text-brand font-mono">₹0</h4>
-              <p className="text-[10px] font-bold text-inksoft uppercase tracking-wider mt-1">Rounding margins</p>
+            <div className="border border-line rounded-2xl p-4 bg-card shadow-sm">
+              <h4 className="text-xl font-extrabold text-brand font-mono ls-mono">₹0.00</h4>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-inksoft mt-1">Discrepancy Variance</p>
             </div>
-            <div className="border border-line rounded-xl p-4 bg-card shadow-sm">
-              <h4 className="text-lg font-extrabold text-brand font-mono">1 Tap</h4>
-              <p className="text-[10px] font-bold text-inksoft uppercase tracking-wider mt-1">To settle balances</p>
+            <div className="border border-line rounded-2xl p-4 bg-card shadow-sm">
+              <h4 className="text-xl font-extrabold text-brand font-mono ls-mono">1 Click</h4>
+              <p className="text-[10px] font-mono uppercase tracking-wider text-inksoft mt-1">To Square Balances</p>
             </div>
           </div>
         </div>
 
         {/* Visual Graph Wheel */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-4">
-          <div className="w-full max-w-md border border-line rounded-3xl p-6 bg-card shadow-lg text-center space-y-4">
-            <div className="flex justify-between items-center pb-3 border-b border-line/60">
-              <span className="text-[10px] font-bold text-inksoft uppercase tracking-wider">Visual simplify flowchart</span>
-              <span className="text-[10px] font-bold text-brand bg-brand-soft px-2 py-0.5 rounded-lg">Active</span>
+        <div className="w-full lg:w-1/2 flex items-center justify-center">
+          <div className="w-full max-w-sm border border-line rounded-3xl p-6 bg-card shadow-card text-center space-y-4">
+            <div className="flex justify-between items-center pb-3 border-b border-line">
+              <span className="text-[9px] font-mono uppercase tracking-widest text-inksoft font-bold">SIMPLIFIED TOPOLOGY</span>
+              <span className="text-[9px] font-mono font-bold text-brand bg-brand-soft px-2 py-0.5 rounded-full">ACTIVE</span>
             </div>
             
-            <div className="h-64 flex items-center justify-center relative">
-              <svg width="240" height="240" className="overflow-visible">
-                {/* Circle base */}
-                <circle cx="120" cy="120" r="70" fill="none" stroke="var(--color-line)" strokeWidth="1" strokeDasharray="2 2" />
+            <div className="h-56 flex items-center justify-center relative">
+              <svg width="220" height="220" className="overflow-visible">
+                <circle cx="110" cy="110" r="65" fill="none" stroke="var(--color-line)" strokeWidth="1" strokeDasharray="3 3" />
 
-                {/* Node paths */}
-                <path d="M 120 30 Q 120 120 120 210" fill="none" stroke="var(--color-brand)" strokeWidth="2.5" markerEnd="url(#arrow-head-active)" className="animate-pulse" />
-                <path d="M 40 160 Q 120 120 200 160" fill="none" stroke="var(--color-line)" strokeWidth="1.5" />
+                {/* Path */}
+                <path d="M 110 30 Q 110 110 110 190" fill="none" stroke="var(--color-brand)" strokeWidth="2" strokeDasharray="4 4" className="animate-pulse" />
+                <path d="M 35 150 Q 110 110 185 150" fill="none" stroke="var(--color-line)" strokeWidth="1.5" />
 
                 {/* Nodes */}
-                <circle cx="120" cy="30" r="16" fill="#14532D" />
-                <text x="120" y="33" textAnchor="middle" className="text-[9px] font-bold fill-white">A</text>
+                <circle cx="110" cy="30" r="16" fill="var(--color-brand)" />
+                <text x="110" y="34" textAnchor="middle" className="text-[9px] font-bold fill-white">A</text>
 
-                <circle cx="40" cy="160" r="16" fill="#166534" />
-                <text x="40" y="163" textAnchor="middle" className="text-[9px] font-bold fill-white">B</text>
+                <circle cx="35" cy="150" r="16" fill="var(--color-brand-soft)" stroke="var(--color-brand)" strokeWidth="1.5" />
+                <text x="35" y="154" textAnchor="middle" className="text-[9px] font-bold fill-brand">B</text>
 
-                <circle cx="200" cy="160" r="16" fill="#166534" />
-                <text x="200" y="163" textAnchor="middle" className="text-[9px] font-bold fill-white">C</text>
+                <circle cx="185" cy="150" r="16" fill="var(--color-brand-soft)" stroke="var(--color-brand)" strokeWidth="1.5" />
+                <text x="185" y="154" textAnchor="middle" className="text-[9px] font-bold fill-brand">C</text>
 
-                <circle cx="120" cy="210" r="16" fill="#C62828" />
-                <text x="120" y="213" textAnchor="middle" className="text-[9px] font-bold fill-white">D</text>
+                <circle cx="110" cy="190" r="16" fill="var(--color-card)" stroke="var(--color-line)" strokeWidth="1.5" />
+                <text x="110" y="194" textAnchor="middle" className="text-[9px] font-bold fill-inksoft">D</text>
               </svg>
             </div>
             
             <p className="text-[11px] text-inksoft leading-relaxed">
-              Curved Bezier lines bend dynamically dynamically depending on nodes position to avoid overlaps and preserve clean readability.
+              Curved Bezier connectors bend dynamically to eliminate path overlaps and maintain legibility.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Security Block Section */}
-      <section id="security" className="max-w-7xl mx-auto px-6 py-20 border-t border-line/60 bg-brand-dark rounded-3xl text-white relative overflow-hidden my-12">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(22,163,74,0.15),transparent)] pointer-events-none" />
-        
-        <div className="relative z-10 max-w-2xl mx-auto text-center space-y-6">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-brand-mint bg-brand-mint/15 px-3 py-1.5 rounded-full border border-brand-mint/20">
-            Secure Infrastructure
+      {/* Security Architecture Section */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="border border-line bg-card rounded-3xl p-8 sm:p-12 text-center space-y-6 shadow-card relative overflow-hidden">
+          <span className="text-[10px] font-mono uppercase tracking-widest text-brand font-bold bg-brand-soft px-3 py-1 rounded-full border border-brand/20">
+            SECURITY INFRASTRUCTURE
           </span>
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">Your ledger data is protected.</h2>
-          <p className="text-xs sm:text-sm text-gray-300 leading-relaxed max-w-lg mx-auto">
-            LedgerSplit monitors calculations with secure session tokens, enforces backend sum validation constraints on split shares, and clears cookies on token expiration redirects.
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">Your financial records remain strictly private.</h2>
+          <p className="text-xs sm:text-sm text-inksoft leading-relaxed max-w-lg mx-auto">
+            LedgerSplit enforces server-side split share mathematical validations, guards sessions with signed JWT tokens, and isolates ledger namespaces.
           </p>
 
-          <div className="flex flex-wrap justify-center gap-6 pt-4 border-t border-white/10">
+          <div className="grid grid-cols-3 max-w-lg mx-auto gap-4 pt-4 border-t border-line">
             <div className="text-center">
-              <div className="text-sm font-bold">256-bit</div>
-              <div className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mt-1">SSL Encryption</div>
+              <div className="text-base font-mono font-bold text-ink">256-bit</div>
+              <div className="text-[9px] font-mono uppercase tracking-wider text-inksoft mt-0.5">TLS Encryption</div>
             </div>
             <div className="text-center">
-              <div className="text-sm font-bold">JWT</div>
-              <div className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mt-1">Token Protection</div>
+              <div className="text-base font-mono font-bold text-ink">JWT</div>
+              <div className="text-[9px] font-mono uppercase tracking-wider text-inksoft mt-0.5">Session Interceptor</div>
             </div>
             <div className="text-center">
-              <div className="text-sm font-bold">SHA-256</div>
-              <div className="text-[9px] font-bold uppercase tracking-wider text-gray-400 mt-1">Pass Hash</div>
+              <div className="text-base font-mono font-bold text-ink">Mongoose</div>
+              <div className="text-[9px] font-mono uppercase tracking-wider text-inksoft mt-0.5">Schema Validation</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="max-w-3xl mx-auto px-6 py-20 border-t border-line/60 space-y-12">
+      <section id="faq" className="max-w-3xl mx-auto px-6 py-20 border-t border-line space-y-10">
         
         {/* Title */}
         <div className="text-center space-y-2">
-          <span className="text-[10px] uppercase font-bold tracking-wider text-brand">Questions</span>
-          <h2 className="text-2xl font-bold text-ink tracking-tight">Frequently Asked Questions</h2>
-          <p className="text-xs text-inksoft">Find answers to queries about the LedgerSplit features.</p>
+          <span className="text-[10px] font-mono uppercase tracking-widest text-brand font-bold">FREQUENTLY ASKED QUESTIONS</span>
+          <h2 className="text-2xl font-extrabold text-ink tracking-tight">Clear answers for every calculation.</h2>
         </div>
 
         {/* FAQ Accordions */}
@@ -564,16 +690,16 @@ export default function Landing() {
               >
                 <button
                   onClick={() => toggleFaq(idx)}
-                  className="w-full flex items-center justify-between px-5 py-4 text-left text-xs font-bold text-ink hover:bg-paper/30 transition-colors"
+                  className="w-full flex items-center justify-between px-5 py-4 text-left text-xs font-bold text-ink hover:bg-paper transition-colors"
                 >
                   <span>{faq.q}</span>
                   <ChevronDown 
-                    size={16} 
+                    size={15} 
                     className={`text-inksoft transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} 
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-5 pb-5 pt-1 text-xs text-inksoft leading-relaxed border-t border-line/45 animate-fadeIn">
+                  <div className="px-5 pb-5 pt-1 text-xs text-inksoft leading-relaxed border-t border-line animate-fadeIn">
                     {faq.a}
                   </div>
                 )}
@@ -584,33 +710,37 @@ export default function Landing() {
 
       </section>
 
-      {/* Footer */}
+      {/* Luxury Editorial Footer */}
       <footer className="border-t border-line bg-card py-10 transition-colors duration-200">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
           
           {/* Logo & copyright */}
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white">
-              <Scale size={14} className="rotate-12" />
+            <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white shadow-sm">
+              <BookOpen size={14} />
             </div>
             <div className="text-left">
               <span className="font-sans font-extrabold text-sm tracking-tight text-ink">
-                Ledger<span className="text-brand-mint">Split</span>
+                LedgerSplit
               </span>
-              <p className="text-[9px] text-inksoft font-semibold">© 2026 LedgerSplit Inc. All rights reserved.</p>
+              <p className="text-[10px] font-mono text-inksoft">© 2026 LedgerSplit. All rights reserved.</p>
             </div>
           </div>
 
-          {/* Social Icons & links */}
+          {/* Status & Github Links */}
           <div className="flex items-center gap-5">
+            <div className="flex items-center gap-2 text-[10px] font-mono text-inksoft">
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <span>Systems operational</span>
+            </div>
             <a 
               href="https://github.com/Ujjaval69/LedgerSplit" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="text-inksoft hover:text-ink transition-colors p-1"
-              aria-label="GitHub Profile"
+              aria-label="GitHub Repository"
             >
-              <Github size={18} />
+              <Github size={17} />
             </a>
           </div>
 

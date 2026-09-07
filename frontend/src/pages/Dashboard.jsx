@@ -169,83 +169,132 @@ export default function Dashboard() {
           <div className="space-y-8 animate-fadeIn">
             {analytics && (
               <>
-                {/* Balance Cards Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Net Balance Card */}
-                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:translate-y-[-1px] transition-all duration-200">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-inksoft">Net Position</span>
-                      <span className={`text-[10px] font-extrabold ${analytics.netBalance >= 0 ? "text-brand" : "text-red-500"}`}>
-                        {analytics.netBalance >= 0 ? "SURPLUS" : "DEFICIT"}
-                      </span>
+                {/* Unified Executive Liquidity Barometer */}
+                <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-card space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-mono uppercase tracking-widest text-inksoft font-bold">
+                          TOTAL NET POSITION
+                        </span>
+                        <span className={`text-[9px] font-mono font-extrabold px-2 py-0.5 rounded-full ${
+                          analytics.netBalance > 0.5 
+                            ? "bg-brand-soft text-brand dark:bg-brand-soft dark:text-brand" 
+                            : analytics.netBalance < -0.5 
+                            ? "bg-red-500/10 text-red-600" 
+                            : "bg-paper text-inksoft"
+                        }`}>
+                          {analytics.netBalance > 0.5 ? "SURPLUS POSITION" : analytics.netBalance < -0.5 ? "LIABILITY DEFICIT" : "FULLY BALANCED"}
+                        </span>
+                      </div>
+                      <div className={`text-3xl sm:text-4xl font-extrabold font-mono tracking-tight mt-1 ls-mono ${
+                        analytics.netBalance > 0.5 ? "text-brand" : analytics.netBalance < -0.5 ? "text-red-600" : "text-ink"
+                      }`}>
+                        {analytics.netBalance >= 0 ? "+" : "-"} {rupee(analytics.netBalance)}
+                      </div>
                     </div>
-                    <div className={`text-2xl font-extrabold font-mono tracking-tight ls-mono ${analytics.netBalance >= 0 ? "text-brand" : "text-red-500"}`}>
-                      {analytics.netBalance >= 0 ? "+" : "-"} {rupee(analytics.netBalance)}
+
+                    {/* Fast Quick Action Buttons */}
+                    <div className="flex items-center gap-2.5">
+                      <button
+                        onClick={() => setShowCreate(true)}
+                        className="inline-flex items-center justify-center gap-2 bg-brand text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm hover:opacity-95 active:scale-95 transition"
+                      >
+                        <Plus size={14} /> New Ledger
+                      </button>
+                      <button
+                        onClick={handleSeedDemo}
+                        disabled={seeding}
+                        className="inline-flex items-center justify-center gap-1.5 border border-line bg-paper/60 hover:bg-paper text-ink px-3.5 py-2 rounded-xl font-semibold text-xs transition disabled:opacity-50"
+                        title="Seed sample Goa trip ledger"
+                      >
+                        {seeding ? "Seeding..." : "⚡ Seed Demo"}
+                      </button>
                     </div>
-                    <span className="text-[10px] text-inksoft font-medium">Your net balance across all ledgers</span>
                   </div>
 
-                  {/* You Are Owed Card */}
-                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:translate-y-[-1px] transition-all duration-200">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-inksoft">You are owed</span>
-                      <span className="text-brand font-extrabold">↗</span>
+                  {/* Liquidity Sub-Metrics Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* You Are Owed */}
+                    <div className="border border-line rounded-2xl p-4 bg-paper/40 flex flex-col justify-between">
+                      <div className="flex items-center justify-between text-inksoft mb-1">
+                        <span className="text-[10px] font-mono uppercase font-bold tracking-wider">YOU ARE OWED</span>
+                        <span className="text-brand font-extrabold text-xs">↗</span>
+                      </div>
+                      <div className="text-xl font-extrabold font-mono text-brand ls-mono">
+                        {rupee(analytics.youAreOwed)}
+                      </div>
+                      <span className="text-[9px] text-inksoft mt-1">Incoming group assets</span>
                     </div>
-                    <div className="text-2xl font-extrabold font-mono text-brand tracking-tight ls-mono">
-                      {rupee(analytics.youAreOwed)}
+
+                    {/* You Owe */}
+                    <div className="border border-line rounded-2xl p-4 bg-paper/40 flex flex-col justify-between">
+                      <div className="flex items-center justify-between text-inksoft mb-1">
+                        <span className="text-[10px] font-mono uppercase font-bold tracking-wider">YOU OWE</span>
+                        <span className="text-red-600 font-extrabold text-xs">↘</span>
+                      </div>
+                      <div className="text-xl font-extrabold font-mono text-red-600 ls-mono">
+                        {rupee(analytics.youOwe)}
+                      </div>
+                      <span className="text-[9px] text-inksoft mt-1">Pending debt resolutions</span>
                     </div>
-                    <span className="text-[10px] text-inksoft font-medium">Outstanding collections</span>
+
+                    {/* Personal Total Spend */}
+                    <div className="border border-line rounded-2xl p-4 bg-paper/40 flex flex-col justify-between">
+                      <div className="flex items-center justify-between text-inksoft mb-1">
+                        <span className="text-[10px] font-mono uppercase font-bold tracking-wider">YOUR SPEND SHARE</span>
+                        <span className="text-ink font-mono font-bold text-xs">₹</span>
+                      </div>
+                      <div className="text-xl font-extrabold font-mono text-ink ls-mono">
+                        {rupee(analytics.totalExpenses)}
+                      </div>
+                      <span className="text-[9px] text-inksoft mt-1">Lifetime personal expenditure</span>
+                    </div>
                   </div>
 
-                  {/* You Owe Card */}
-                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:translate-y-[-1px] transition-all duration-200">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-[10px] uppercase font-bold tracking-wider text-inksoft">You owe</span>
-                      <span className="text-red-500 font-extrabold">↘</span>
-                    </div>
-                    <div className="text-2xl font-extrabold font-mono text-red-500 tracking-tight ls-mono">
-                      {rupee(analytics.youOwe)}
-                    </div>
-                    <span className="text-[10px] text-inksoft font-medium">Pending repayments</span>
-                  </div>
+                  {/* Settlement Ratio Progress Bar */}
+                  {(() => {
+                    const totalLiabilities = (analytics.youAreOwed || 0) + (analytics.youOwe || 0);
+                    const totalActivity = (analytics.totalExpenses || 0) + totalLiabilities;
+                    const settlementPct = totalLiabilities === 0 ? 100 : Math.max(12, Math.min(94, Math.round(((analytics.totalExpenses || 1) / (totalActivity || 1)) * 100)));
+
+                    return (
+                      <div className="pt-2">
+                        <div className="flex items-center justify-between text-[10px] font-mono text-inksoft mb-1.5">
+                          <span className="font-bold">GROUP SETTLEMENT HEALTH</span>
+                          <span className="font-extrabold text-ink">{settlementPct}% RESOLVED</span>
+                        </div>
+                        <div className="w-full h-2 rounded-full bg-paper border border-line overflow-hidden">
+                          <div 
+                            style={{ width: `${settlementPct}%` }}
+                            className="h-full bg-brand rounded-full transition-all duration-500"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
-                {/* Statistics Cards Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Total Spending (Forest Green Card) */}
-                  <div className="bg-brand text-white rounded-2xl p-5 shadow-sm hover:translate-y-[-1px] transition-all duration-200 flex flex-col justify-between h-28 relative overflow-hidden">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/80">Total Spending</span>
-                      <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center font-bold text-white text-[10px]">
-                        ₹
-                      </div>
+                {/* Secondary Metrics (Ledgers & Friends Count) */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-card border border-line rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-inksoft font-bold">ACTIVE LEDGERS</span>
+                      <div className="text-2xl font-extrabold font-mono text-ink mt-0.5">{analytics.totalGroups}</div>
                     </div>
-                    <div className="text-2xl font-extrabold tracking-tight font-mono">{rupee(analytics.totalExpenses)}</div>
-                    <span className="text-[9px] text-white/70 font-medium">Your personal share of group bills</span>
+                    <div className="w-9 h-9 rounded-xl bg-paper flex items-center justify-center text-inksoft border border-line">
+                      <BookOpen size={15} />
+                    </div>
                   </div>
 
-                  {/* Total Groups (White Card) */}
-                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:translate-y-[-1px] transition-all duration-200 flex flex-col justify-between h-28">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-inksoft">Total Ledgers</span>
-                      <div className="w-6 h-6 rounded-full bg-paper dark:bg-paper/10 flex items-center justify-center text-inksoft">
-                        <BookOpen size={12} />
-                      </div>
+                  <div className="bg-card border border-line rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-mono uppercase tracking-wider text-inksoft font-bold">GROUP CONNECTIONS</span>
+                      <div className="text-2xl font-extrabold font-mono text-ink mt-0.5">{analytics.totalMembers}</div>
                     </div>
-                    <div className="text-2xl font-extrabold tracking-tight text-ink font-mono">{analytics.totalGroups}</div>
-                    <span className="text-[9px] text-inksoft font-medium">Active group ledgers joined</span>
-                  </div>
-
-                  {/* Total Members (White Card) */}
-                  <div className="bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:translate-y-[-1px] transition-all duration-200 flex flex-col justify-between h-28">
-                    <div className="flex justify-between items-start">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-inksoft">Total Friends</span>
-                      <div className="w-6 h-6 rounded-full bg-paper dark:bg-paper/10 flex items-center justify-center text-inksoft">
-                        <Users size={12} />
-                      </div>
+                    <div className="w-9 h-9 rounded-xl bg-paper flex items-center justify-center text-inksoft border border-line">
+                      <Users size={15} />
                     </div>
-                    <div className="text-2xl font-extrabold tracking-tight text-ink font-mono">{analytics.totalMembers}</div>
-                    <span className="text-[9px] text-inksoft font-medium">Unique friends split with</span>
                   </div>
                 </div>
 
@@ -487,9 +536,9 @@ export default function Dashboard() {
                   </div>
                 </div>
               ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {groups.map((g) => {
-                    const [gradient, textClass] = accentFor(g._id);
+                    const [gradient] = accentFor(g._id);
                     const bal = g.yourBalance || 0;
                     const isCredit = bal > 0.5;
                     const isDebt = bal < -0.5;
@@ -498,33 +547,65 @@ export default function Dashboard() {
                       <button
                         key={g._id}
                         onClick={() => navigate(`/groups/${g._id}`)}
-                        className="group text-left bg-card border border-line rounded-2xl p-5 shadow-sm hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200"
+                        className="group text-left bg-card border border-line rounded-3xl p-5 sm:p-6 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
                       >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center font-sans font-bold text-white shadow-sm shrink-0`}>
-                            {g.name.charAt(0).toUpperCase()}
+                        {/* Top Monogram & Balance Status */}
+                        <div>
+                          <div className="flex items-start justify-between gap-2 mb-4">
+                            <div className="w-10 h-10 rounded-2xl bg-brand text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform duration-200">
+                              {g.name.charAt(0).toUpperCase()}
+                            </div>
+                            {(isCredit || isDebt) ? (
+                              <span
+                                className={`text-[10px] font-bold font-mono px-2.5 py-1 rounded-full ls-mono ${
+                                  isCredit 
+                                    ? "bg-brand-soft text-brand dark:bg-brand-soft dark:text-brand" 
+                                    : "bg-red-500/10 text-red-600"
+                                }`}
+                              >
+                                {isCredit ? "+" : "-"}
+                                {rupee(bal)}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-mono font-bold text-inksoft bg-paper px-2.5 py-1 rounded-full border border-line">
+                                SETTLED UP
+                              </span>
+                            )}
                           </div>
-                          {(isCredit || isDebt) ? (
-                            <span
-                              className={`text-[10px] font-bold font-mono px-2 py-0.5 rounded-lg ls-mono ${
-                                isCredit 
-                                  ? "bg-brand-soft text-brand dark:bg-brand-soft/20 dark:text-brand-mint" 
-                                  : "bg-red-500/10 text-red-500"
-                              }`}
-                            >
-                              {isCredit ? "+" : "-"}
-                              {rupee(bal)}
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-bold text-inksoft bg-paper dark:bg-paper/10 px-2 py-0.5 rounded-lg">
-                              Settled up
-                            </span>
-                          )}
+
+                          {/* Ledger Name */}
+                          <h3 className="font-sans font-bold text-base text-ink truncate mb-1 group-hover:text-brand transition">
+                            {g.name}
+                          </h3>
+                          <span className="text-[10px] font-mono text-inksoft uppercase tracking-wider block">
+                            PASSBOOK LEDGER
+                          </span>
                         </div>
-                        <h3 className="font-sans font-bold text-sm text-ink truncate mb-1 group-hover:text-brand transition">{g.name}</h3>
-                        <div className="flex items-center gap-1 text-[10px] text-inksoft font-medium">
-                          <Users size={12} className="text-inksoft" />
-                          <span>{g.members.length} member{g.members.length !== 1 ? "s" : ""}</span>
+
+                        {/* Bottom Avatar Stack & Resolution Link */}
+                        <div className="mt-5 pt-4 border-t border-line flex items-center justify-between">
+                          {/* Avatar Stack */}
+                          <div className="flex items-center -space-x-1.5 overflow-hidden">
+                            {g.members.slice(0, 3).map((m, idx) => (
+                              <div
+                                key={idx}
+                                className="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center text-[9px] font-bold ring-2 ring-card shadow-sm"
+                                title={typeof m === "object" ? m.name : m}
+                              >
+                                {typeof m === "object" && m.name ? m.name.charAt(0).toUpperCase() : "M"}
+                              </div>
+                            ))}
+                            {g.members.length > 3 && (
+                              <div className="w-6 h-6 rounded-full bg-paper text-inksoft flex items-center justify-center text-[9px] font-mono font-bold ring-2 ring-card border border-line">
+                                +{g.members.length - 3}
+                              </div>
+                            )}
+                          </div>
+
+                          <span className="text-[11px] font-bold text-brand group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                            <span>Open</span>
+                            <span className="text-xs">→</span>
+                          </span>
                         </div>
                       </button>
                     );

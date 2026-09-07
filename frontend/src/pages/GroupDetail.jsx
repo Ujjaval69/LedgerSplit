@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Stamp, X, ArrowRight, Receipt, Trash2, UserPlus, ArrowLeft, Pencil, Search, Download, Printer, Archive } from "lucide-react";
+import { Plus, Stamp, X, ArrowRight, Receipt, Trash2, UserPlus, ArrowLeft, Pencil, Search, Download, Printer, Archive, Sparkles, ShieldCheck } from "lucide-react";
 import api from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
@@ -473,65 +473,79 @@ export default function GroupDetail() {
           </div>
           
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[600px]">
+            <table className="w-full text-left border-collapse min-w-[620px]">
               <thead>
-                <tr className="border-b border-line text-[10px] uppercase font-bold text-inksoft bg-paper/30">
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3">Particulars</th>
-                  <th className="px-6 py-3">Paid By</th>
-                  <th className="px-6 py-3 text-right">Amount</th>
-                  <th className="px-6 py-3 w-12"></th>
+                <tr className="border-b border-line text-[9px] font-mono uppercase tracking-widest font-bold text-inksoft/80 bg-paper/30">
+                  <th className="px-6 py-3.5">Date</th>
+                  <th className="px-6 py-3.5">Particulars &amp; Split</th>
+                  <th className="px-6 py-3.5">Payer</th>
+                  <th className="px-6 py-3.5 text-right">Amount (INR)</th>
+                  <th className="px-6 py-3.5 w-16"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line/60">
                 {expenses.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-10 text-center text-xs text-inksoft">
-                      <Receipt size={24} className="mx-auto mb-2 text-inksoft/40 animate-pulse" />
-                      No expenses logged yet. Click "Add Expense" to start!
+                    <td colSpan="5" className="px-6 py-12 text-center text-xs text-inksoft">
+                      <Receipt size={22} className="mx-auto mb-2 text-inksoft/40" />
+                      <p className="font-semibold text-ink">No expenses logged yet.</p>
+                      <p className="text-[11px] text-inksoft mt-0.5">Click &ldquo;Add Expense&rdquo; above or import a CSV file.</p>
                     </td>
                   </tr>
                 ) : filteredExpenses.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-6 py-10 text-center text-xs text-inksoft">
-                      <Search size={24} className="mx-auto mb-2 text-inksoft/40 animate-pulse" />
-                      No expenses match your filters. Click "Reset" to clear search!
+                    <td colSpan="5" className="px-6 py-12 text-center text-xs text-inksoft">
+                      <Search size={22} className="mx-auto mb-2 text-inksoft/40" />
+                      <p className="font-semibold text-ink">No matching transactions found.</p>
+                      <p className="text-[11px] text-inksoft mt-0.5">Clear filters or try searching for another description.</p>
                     </td>
                   </tr>
                 ) : (
                   filteredExpenses.map((exp) => (
                     <tr 
                       key={exp._id}
-                      className="hover:bg-paper/20 transition-colors group text-xs text-ink"
+                      className="hover:bg-paper/30 transition-colors group text-xs text-ink"
                     >
-                      <td className="px-6 py-4 text-inksoft font-medium">
-                        {new Date(exp.date || exp.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
+                      <td className="px-6 py-4 text-inksoft font-mono text-[11px]">
+                        {new Date(exp.date || exp.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-ink">{exp.description}</span>
-                          <span className="px-2 py-0.5 text-[9px] font-extrabold rounded-full bg-paper dark:bg-paper/10 text-brand-mint/90 border border-line uppercase tracking-wider">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-ink text-sm">{exp.description}</span>
+                          <span className="px-2 py-0.5 text-[8px] font-mono font-bold uppercase tracking-wider rounded-full bg-paper border border-line text-inksoft">
                             {exp.category || "Other"}
                           </span>
                           {exp.receiptUrl && (
                             <button
                               onClick={() => setActiveReceiptPreview(exp.receiptUrl)}
-                              className="p-1 rounded bg-brand-soft text-brand dark:bg-brand-soft/20 dark:text-brand-mint hover:opacity-90 transition"
-                              title="View Receipt"
+                              className="px-2 py-0.5 rounded-full bg-brand-soft text-brand dark:bg-brand-soft dark:text-brand hover:opacity-90 transition text-[9px] font-mono font-bold flex items-center gap-1 border border-brand/20"
+                              title="Inspect Receipt Invoice"
                             >
                               <Receipt size={10} />
+                              <span>Invoice</span>
                             </button>
                           )}
                         </div>
-                        <div className="text-[10px] text-inksoft mt-0.5">split {exp.splitAmong.length} ways</div>
+                        <div className="text-[10px] font-mono text-inksoft mt-1">
+                          Split among {exp.splitAmong.length} member{exp.splitAmong.length !== 1 ? "s" : ""}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 font-medium">{exp.paidBy.name}</td>
-                      <td className="px-6 py-4 text-right font-mono font-bold ls-mono">{rupee(exp.amount)}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full bg-brand text-white flex items-center justify-center text-[9px] font-bold shrink-0">
+                            {exp.paidBy.name.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="font-medium text-ink">{exp.paidBy.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right font-mono font-bold text-sm ls-mono">
+                        {rupee(exp.amount)}
+                      </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => setEditingExpense(exp)}
-                            className="p-1 rounded-md text-inksoft hover:text-brand hover:bg-brand/5 transition opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                            className="p-1.5 rounded-lg text-inksoft hover:text-brand hover:bg-paper transition"
                             title="Edit expense"
                           >
                             <Pencil size={13} />
@@ -539,7 +553,7 @@ export default function GroupDetail() {
                           <button
                             onClick={() => deleteExpense(exp._id)}
                             aria-label={`Delete expense: ${exp.description}`}
-                            className="p-1 rounded-md text-inksoft hover:text-red-500 hover:bg-red-500/5 transition opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
+                            className="p-1.5 rounded-lg text-inksoft hover:text-red-500 hover:bg-red-500/5 transition"
                             title="Delete expense"
                           >
                             <Trash2 size={13} />
@@ -827,51 +841,103 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
       }
       onAdded();
     } catch (err) {
-      setError(err.response?.data?.message || "Could not add expense");
+      setError(err.response?.data?.message || "Could not record expense");
     } finally {
       setSaving(false);
     }
   }
 
+  function handleAutoBalance() {
+    if (splitType === "equal" || !paidBy) return;
+    if (splitType === "percentage") {
+      const currentOthers = splitAmong
+        .filter((id) => id !== paidBy)
+        .reduce((sum, id) => sum + (parseFloat(splitDetails[id]) || 0), 0);
+      const remainder = Math.max(0, parseFloat((100 - currentOthers).toFixed(2)));
+      setSplitDetails((prev) => ({ ...prev, [paidBy]: remainder }));
+    } else if (splitType === "exact") {
+      const currentOthers = splitAmong
+        .filter((id) => id !== paidBy)
+        .reduce((sum, id) => sum + (parseFloat(splitDetails[id]) || 0), 0);
+      const remainder = Math.max(0, parseFloat((numericAmount - currentOthers).toFixed(2)));
+      setSplitDetails((prev) => ({ ...prev, [paidBy]: remainder }));
+    }
+  }
+
   return (
     <div
-      className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn"
+      className="fixed inset-0 bg-ink/50 backdrop-blur-sm flex items-center justify-center z-50 px-4 animate-fadeIn"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-modal border border-line animate-scaleIn max-h-[90vh] overflow-y-auto"
+        className="bg-card rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-modal border border-line animate-scaleIn max-h-[90vh] overflow-y-auto"
       >
-        <div className="flex justify-between items-center mb-5">
-          <h3 className="font-sans font-bold text-lg text-ink">{expenseToEdit ? "Edit Expense" : "Add an Expense"}</h3>
-          <button onClick={onClose} className="text-inksoft hover:text-ink transition">
+        {/* Modal Header */}
+        <div className="flex justify-between items-center pb-4 border-b border-line mb-5">
+          <div>
+            <span className="text-[9px] font-mono uppercase tracking-widest text-brand font-bold">
+              EXPENSE ENTRY
+            </span>
+            <h3 className="font-sans font-bold text-lg text-ink">
+              {expenseToEdit ? "Edit Transaction" : "Record New Expense"}
+            </h3>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition">
             <X size={18} />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 text-xs bg-red-50 dark:bg-red-950/20 border border-debt/30 text-debt rounded-lg px-3 py-2.5 animate-fadeIn">
+          <div className="mb-4 text-xs bg-red-50 dark:bg-red-950/20 border border-debt/30 text-debt rounded-xl px-3.5 py-2.5 animate-fadeIn">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* CSV Quick Ingestion (New entries only) */}
           {!expenseToEdit && (
-            <div className="border border-dashed border-line rounded-xl p-3.5 text-center bg-paper/20 hover:bg-paper/40 transition relative cursor-pointer group/import">
+            <div className="border border-dashed border-line rounded-2xl p-3 text-center bg-paper/30 hover:bg-paper/60 transition relative cursor-pointer group/import">
               <input
                 type="file"
                 accept=".csv"
                 onChange={handleCSVImport}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
-              <div className="text-[10px] text-inksoft font-bold group-hover/import:text-brand transition flex items-center justify-center gap-1.5">
-                <Download size={12} className="rotate-180 text-inksoft group-hover/import:text-brand transition" /> Drop or select a CSV to import multiple expenses
+              <div className="text-[10px] text-inksoft font-semibold group-hover/import:text-brand transition flex items-center justify-center gap-1.5">
+                <Download size={13} className="rotate-180 text-inksoft group-hover/import:text-brand transition" />
+                <span>Drop CSV spreadsheet to batch import</span>
               </div>
             </div>
           )}
-          <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">What was it for?</label>
+
+          {/* STEP 1: Amount & Particulars */}
+          <div className="space-y-3.5 bg-paper/20 border border-line rounded-2xl p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-mono uppercase font-bold tracking-wider text-inksoft">
+                STEP 1: AMOUNT &amp; DETAILS
+              </span>
+              <span className="text-[9px] font-mono text-brand font-bold">INR (₹)</span>
+            </div>
+
+            {/* Oversized Currency Input */}
             <div className="relative">
+              <input
+                type="number"
+                step="0.01"
+                required
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full text-center text-3xl font-mono font-extrabold text-ink bg-card border border-line rounded-xl py-3 px-4 outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition ls-mono"
+                placeholder="0.00"
+              />
+            </div>
+
+            {/* Description with Autocomplete */}
+            <div className="relative">
+              <label className="block text-[10px] uppercase font-mono font-bold tracking-wider text-inksoft mb-1">
+                Description
+              </label>
               <input
                 required
                 autoFocus
@@ -882,8 +948,8 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
                 }}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
-                placeholder="e.g. Pizza dinner"
+                className="w-full border border-line bg-card rounded-xl px-3 py-2 text-xs outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
+                placeholder="e.g. Flight tickets to Goa"
               />
               {showSuggestions && uniqueDescriptions.length > 0 && (
                 <div className="absolute left-0 right-0 top-full mt-1 bg-card border border-line rounded-xl shadow-modal overflow-hidden z-50">
@@ -892,7 +958,7 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
                       key={idx}
                       type="button"
                       onClick={() => handleSelectSuggestion(desc)}
-                      className="w-full text-left px-4 py-2 hover:bg-paper text-xs font-semibold text-ink transition-colors"
+                      className="w-full text-left px-3.5 py-2 hover:bg-paper text-xs font-medium text-ink transition-colors"
                     >
                       {desc}
                     </button>
@@ -900,146 +966,174 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
                 </div>
               )}
             </div>
+
+            {/* Category & Date Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-[10px] uppercase font-mono font-bold tracking-wider text-inksoft mb-1">
+                  Category
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full border border-line bg-card rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-brand text-ink"
+                >
+                  {["Food", "Travel", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"].map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-mono font-bold tracking-wider text-inksoft mb-1">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full border border-line bg-card rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-brand text-ink"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Category</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
-              >
-                {["Food", "Travel", "Shopping", "Bills", "Entertainment", "Health", "Education", "Other"].map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Transaction Date</label>
-              <input
-                type="date"
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Amount (₹)</label>
-            <input
-              type="number"
-              step="0.01"
-              required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
-              placeholder="0.00"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Paid by</label>
-            <select
-              value={paidBy}
-              onChange={(e) => setPaidBy(e.target.value)}
-              className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
-            >
-              {group.members.map((m) => (
-                <option key={m._id} value={m._id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1.5">Split among</label>
+          {/* STEP 2: The Payer */}
+          <div className="space-y-2 bg-paper/20 border border-line rounded-2xl p-4">
+            <span className="text-[9px] font-mono uppercase font-bold tracking-wider text-inksoft block">
+              STEP 2: PAID BY
+            </span>
             <div className="flex flex-wrap gap-1.5">
               {group.members.map((m) => {
-                const checked = splitAmong.includes(m._id);
+                const isSelected = paidBy === m._id;
                 return (
                   <button
                     type="button"
                     key={m._id}
-                    onClick={() => toggleMember(m._id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 ${
-                      checked
-                        ? "bg-brand-soft border-brand text-brand dark:bg-brand-soft/20 dark:text-brand-mint"
-                        : "border-line text-inksoft hover:bg-paper"
+                    onClick={() => setPaidBy(m._id)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 border transition-all ${
+                      isSelected
+                        ? "bg-brand text-white border-brand shadow-sm font-bold"
+                        : "border-line bg-card text-inksoft hover:bg-paper"
                     }`}
                   >
-                    {m.name}
+                    <span className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center text-[9px] font-bold">
+                      {m.name.charAt(0).toUpperCase()}
+                    </span>
+                    <span>{m.name}</span>
                   </button>
                 );
               })}
             </div>
           </div>
 
-          <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1.5">Split type</label>
-            <div className="flex gap-1.5">
-              {[
-                { value: "equal", label: "Equal" },
-                { value: "percentage", label: "Percentage" },
-                { value: "exact", label: "Exact" },
-              ].map((opt) => (
-                <button
-                  type="button"
-                  key={opt.value}
-                  onClick={() => setSplitType(opt.value)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-150 ${
-                    splitType === opt.value
-                      ? "bg-brand text-white border-brand"
-                      : "border-line text-inksoft hover:bg-paper"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {splitType !== "equal" && (
-            <div className="space-y-2 border border-line rounded-xl p-3.5 bg-paper/30 animate-fadeIn">
-              {splitAmong.length === 0 && (
-                <p className="text-xs text-inksoft">Select members from above to split.</p>
-              )}
-              {splitAmong.map((id) => {
-                const m = group.members.find((mem) => mem._id === id);
-                return (
-                  <div key={id} className="flex items-center justify-between gap-3">
-                    <span className="text-xs font-bold text-ink">{m?.name}</span>
-                    <div className="flex items-center gap-1">
-                      {splitType === "exact" && <span className="text-xs text-inksoft">₹</span>}
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={splitDetails[id] || ""}
-                        onChange={(e) => updateDetail(id, e.target.value)}
-                        className="w-20 border border-line rounded-lg px-2 py-1 text-xs outline-none bg-card focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
-                        placeholder="0"
-                      />
-                      {splitType === "percentage" && <span className="text-xs text-inksoft">%</span>}
-                    </div>
-                  </div>
-                );
-              })}
-              <div className={`text-[10px] font-bold pt-1.5 transition-colors border-t border-line mt-2 ${detailMismatch ? "text-red-500" : "text-inksoft"}`}>
-                Total: {splitType === "percentage" ? `${detailTotal}%` : rupee(detailTotal)}
-                {splitType === "percentage" ? " / 100%" : ` / ${rupee(numericAmount)}`}
-                {detailMismatch && " — doesn't add up"}
+          {/* STEP 3: Split Engine */}
+          <div className="space-y-3 bg-paper/20 border border-line rounded-2xl p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-mono uppercase font-bold tracking-wider text-inksoft">
+                STEP 3: SPLIT ENGINE
+              </span>
+              {/* Split Mode Tabs */}
+              <div className="flex bg-card border border-line rounded-xl p-0.5">
+                {[
+                  { value: "equal", label: "Equal" },
+                  { value: "percentage", label: "%" },
+                  { value: "exact", label: "Exact ₹" },
+                ].map((opt) => (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => setSplitType(opt.value)}
+                    className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all ${
+                      splitType === opt.value
+                        ? "bg-brand text-white shadow-sm"
+                        : "text-inksoft hover:text-ink"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
-          )}
 
-          <div className="border-t border-line/60 pt-3">
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Attach Receipt</label>
-            <div className="flex items-center gap-3">
+            {/* Members Selector (Equal mode) */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-mono text-inksoft">Included members:</span>
+              <div className="flex flex-wrap gap-1.5">
+                {group.members.map((m) => {
+                  const checked = splitAmong.includes(m._id);
+                  return (
+                    <button
+                      type="button"
+                      key={m._id}
+                      onClick={() => toggleMember(m._id)}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
+                        checked
+                          ? "bg-brand-soft border-brand text-brand dark:bg-brand-soft dark:text-brand"
+                          : "border-line bg-card text-inksoft/60 hover:text-ink"
+                      }`}
+                    >
+                      {m.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Unequal details inputs & auto-balance */}
+            {splitType !== "equal" && (
+              <div className="space-y-2 border-t border-line pt-3 mt-2">
+                {splitAmong.map((id) => {
+                  const m = group.members.find((mem) => mem._id === id);
+                  return (
+                    <div key={id} className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-bold text-ink">{m?.name}</span>
+                      <div className="flex items-center gap-1">
+                        {splitType === "exact" && <span className="text-xs font-mono text-inksoft">₹</span>}
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={splitDetails[id] || ""}
+                          onChange={(e) => updateDetail(id, e.target.value)}
+                          className="w-20 border border-line rounded-lg px-2 py-1 text-xs font-mono font-bold outline-none bg-card focus:border-brand text-ink"
+                          placeholder="0"
+                        />
+                        {splitType === "percentage" && <span className="text-xs font-mono text-inksoft">%</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Status and Auto-Balance Helper */}
+                <div className={`text-[10px] font-mono font-bold pt-1.5 flex justify-between items-center border-t border-line ${detailMismatch ? "text-red-500" : "text-inksoft"}`}>
+                  <span>Sum: {splitType === "percentage" ? `${detailTotal}% / 100%` : `${rupee(detailTotal)} / ${rupee(numericAmount)}`}</span>
+                  <span>{detailMismatch ? "Mismatch" : "Balanced ✓"}</span>
+                </div>
+
+                {detailMismatch && (
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] font-semibold text-amber-700 dark:text-amber-300 animate-fadeIn">
+                    <span>
+                      Discrepancy: {splitType === "percentage" ? `${Math.abs(100 - detailTotal).toFixed(1)}%` : rupee(Math.abs(numericAmount - detailTotal))}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAutoBalance}
+                      className="underline font-bold text-brand hover:opacity-80"
+                    >
+                      Auto-balance remainder
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Receipt attachment */}
+          <div className="flex items-center justify-between pt-1 text-xs">
+            <label className="text-[10px] font-mono uppercase font-bold text-inksoft">RECEIPT INVOICE</label>
+            <div className="flex items-center gap-2">
               <input
                 type="file"
                 accept="image/*"
@@ -1049,22 +1143,23 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
                     toast("Receipt attached!", "success");
                   }
                 }}
-                className="block w-full text-xs text-inksoft file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-[10px] file:font-bold file:bg-brand-soft file:text-brand dark:file:bg-brand-soft/20 dark:file:text-brand-mint hover:file:opacity-90 file:cursor-pointer transition"
+                className="text-[10px] text-inksoft file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-paper file:text-ink cursor-pointer"
               />
               {receiptUrl && (
-                <span className="text-[9px] font-bold text-brand bg-brand-soft dark:bg-brand-soft/20 dark:text-brand-mint px-2 py-1 rounded-lg shrink-0 flex items-center gap-1 animate-fadeIn">
+                <span className="text-[9px] font-mono font-bold text-brand bg-brand-soft px-2 py-0.5 rounded-full">
                   Attached ✓
                 </span>
               )}
             </div>
           </div>
 
+          {/* Submit CTA Button */}
           <button
             type="submit"
             disabled={saving || detailMismatch || splitAmong.length === 0}
-            className="w-full bg-brand text-white py-3 rounded-xl font-bold text-sm disabled:opacity-50 hover:opacity-90 active:scale-95 transition-all shadow-sm"
+            className="w-full bg-brand text-white py-3 rounded-2xl font-bold text-xs disabled:opacity-50 hover:opacity-95 active:scale-98 transition-all shadow-sm"
           >
-            {saving ? (expenseToEdit ? "Saving..." : "Adding...") : (expenseToEdit ? "Save Changes" : "Add to Ledger")}
+            {saving ? "Recording..." : (expenseToEdit ? "Save Changes" : "Record to Ledger")}
           </button>
         </form>
       </div>
@@ -1091,25 +1186,40 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn"
+      className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn backdrop-blur-sm"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         className={`bg-card rounded-2xl p-6 w-full shadow-modal border border-line animate-scaleIn transition-all duration-300 ${
-          view === "graph" || activeSettleDetail ? "max-w-md" : "max-w-sm"
+          activeSettleDetail ? "max-w-lg" : view === "graph" ? "max-w-md" : "max-w-md"
         }`}
       >
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-sans font-bold text-lg text-ink font-sans">Simplified Settlement</h3>
-          <button onClick={onClose} className="text-inksoft hover:text-ink transition">
-            <X size={18} />
+        {/* Header */}
+        <div className="flex justify-between items-start mb-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-sans font-bold text-base text-ink">
+                {activeSettleDetail ? "Digital Clearance Voucher" : "Simplified Settlement"}
+              </h3>
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-brand bg-brand-soft/30 px-2 py-0.5 rounded-full border border-brand/20">
+                <Sparkles size={10} /> Min. Cash Flow
+              </span>
+            </div>
+            <p className="text-[11px] text-inksoft mt-0.5">
+              {activeSettleDetail
+                ? `Voucher Ref: #VCH-${(activeSettleDetail.from || "").slice(-4).toUpperCase()}-${(activeSettleDetail.to || "").slice(-4).toUpperCase()}`
+                : `Algorithmic net-balancing reduced group debt to ${settlements.length} direct clearance voucher${settlements.length === 1 ? "" : "s"}.`}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition">
+            <X size={16} />
           </button>
         </div>
 
-        {/* View Switcher Tabs */}
+        {/* View Switcher Tabs (Only when not in voucher clearance mode and has settlements) */}
         {!activeSettleDetail && settlements.length > 0 && (
-          <div className="flex bg-paper rounded-xl p-1 mb-5 border border-line">
+          <div className="flex bg-paper rounded-xl p-1 mb-4 border border-line">
             <button
               onClick={() => setView("list")}
               className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -1118,7 +1228,7 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                   : "text-inksoft hover:text-ink"
               }`}
             >
-              List View
+              List View ({settlements.length})
             </button>
             <button
               onClick={() => setView("graph")}
@@ -1134,52 +1244,136 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
         )}
 
         {settlements.length === 0 ? (
-          <div className="text-center py-8">
-            <div className="inline-block border-2 border-brand text-brand font-sans font-bold text-xs tracking-wider px-5 py-2 rounded-xl -rotate-3 animate-stampIn">
-              ALL SETTLED
+          <div className="text-center py-10 space-y-3">
+            <div className="inline-block border-2 border-brand text-brand font-mono font-bold text-xs tracking-widest px-6 py-2 rounded-xl -rotate-3 animate-stampIn shadow-sm">
+              ✓ ZERO OUTSTANDING DEBT
             </div>
+            <p className="text-xs text-inksoft">All peer balances in this ledger are completely balanced.</p>
           </div>
         ) : activeSettleDetail ? (
-          /* Custom Settlement Amount Form overlay (supports partial settlements) */
-          <div className="space-y-4 animate-fadeIn text-left pt-2">
-            <div className="bg-paper/50 border border-line rounded-xl p-4 space-y-3.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-inksoft">Record Settlement Payment</h4>
-              <div className="flex items-center justify-between text-xs text-ink font-semibold">
-                <span>Paying from:</span>
-                <span className="font-bold text-red-500">{nameOf(activeSettleDetail.from)}</span>
+          /* DIGITAL CLEARANCE VOUCHER (Phase 7 Luxury Experience) */
+          <div className="space-y-4 animate-fadeIn text-left pt-1">
+            {/* Voucher Body Box */}
+            <div className="bg-paper/60 border border-line rounded-2xl p-4 space-y-3.5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-brand/5 rounded-full blur-xl pointer-events-none" />
+              
+              <div className="flex items-center justify-between border-b border-line/60 pb-3">
+                <div className="space-y-0.5">
+                  <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-inksoft block">
+                    Debtor (Paying)
+                  </span>
+                  <span className="text-sm font-bold text-red-500">
+                    {nameOf(activeSettleDetail.from)}
+                  </span>
+                </div>
+                <div className="px-2 py-1 rounded-full bg-card border border-line text-inksoft text-xs flex items-center justify-center">
+                  <ArrowRight size={13} />
+                </div>
+                <div className="text-right space-y-0.5">
+                  <span className="text-[10px] font-mono uppercase font-bold tracking-wider text-inksoft block">
+                    Creditor (Receiving)
+                  </span>
+                  <span className="text-sm font-bold text-brand">
+                    {nameOf(activeSettleDetail.to)}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between text-xs text-ink font-semibold">
-                <span>Receiving to:</span>
-                <span className="font-bold text-brand">{nameOf(activeSettleDetail.to)}</span>
-              </div>
-              <div className="flex items-center justify-between text-xs text-inksoft font-semibold border-t border-line/60 pt-2.5">
-                <span>Original Debt:</span>
-                <span className="font-mono font-bold text-ink">{rupee(activeSettleDetail.originalAmount)}</span>
+
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-inksoft font-medium">Total Net Debt:</span>
+                <span className="font-mono font-bold text-ink text-sm">
+                  {rupee(activeSettleDetail.originalAmount)}
+                </span>
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft">
-                Payment Amount (₹)
-              </label>
+            {/* Partial Settlement Slider & Synced Amount Input */}
+            <div className="space-y-2 bg-card border border-line rounded-2xl p-4">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-inksoft">
+                  Payment Amount
+                </label>
+                <div className="flex items-center gap-1.5">
+                  {[25, 50, 100].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => {
+                        const amt = Math.round((activeSettleDetail.originalAmount * pct) / 100);
+                        setActiveSettleDetail({ ...activeSettleDetail, amount: amt });
+                      }}
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border transition-all ${
+                        activeSettleDetail.amount === Math.round((activeSettleDetail.originalAmount * pct) / 100)
+                          ? "bg-brand text-white border-brand"
+                          : "border-line text-inksoft hover:text-ink hover:bg-paper"
+                      }`}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Monospace Amount Input */}
+              <div className="relative">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono font-bold text-inksoft text-base">
+                  ₹
+                </span>
+                <input
+                  type="number"
+                  step="1"
+                  min="1"
+                  max={activeSettleDetail.originalAmount}
+                  required
+                  autoFocus
+                  value={activeSettleDetail.amount}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value) || 0;
+                    setActiveSettleDetail({ ...activeSettleDetail, amount: val });
+                  }}
+                  className="w-full border border-line bg-paper/40 rounded-xl pl-8 pr-3.5 py-2.5 text-base text-ink font-mono font-bold outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 transition"
+                />
+              </div>
+
+              {/* Slider */}
               <input
-                type="number"
-                step="0.01"
-                required
-                autoFocus
-                value={activeSettleDetail.amount}
-                onChange={(e) => setActiveSettleDetail({ ...activeSettleDetail, amount: parseFloat(e.target.value) || 0 })}
-                className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm text-ink font-mono font-bold outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition"
+                type="range"
+                min="1"
+                max={activeSettleDetail.originalAmount}
+                step="1"
+                value={Math.min(activeSettleDetail.amount, activeSettleDetail.originalAmount)}
+                onChange={(e) => setActiveSettleDetail({ ...activeSettleDetail, amount: Number(e.target.value) })}
+                className="w-full accent-brand cursor-pointer h-1.5 bg-paper rounded-lg appearance-none"
               />
+
+              {/* Live Remaining Liability Feedback */}
+              <div className="flex items-center justify-between text-[11px] pt-1 border-t border-line/40">
+                <span className="text-inksoft">Remaining Liability:</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-ink">
+                    {rupee(Math.max(0, activeSettleDetail.originalAmount - activeSettleDetail.amount))}
+                  </span>
+                  {activeSettleDetail.amount >= activeSettleDetail.originalAmount ? (
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-brand bg-brand-soft/30 px-2 py-0.5 rounded-full border border-brand/20">
+                      Full Clearance
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                      Partial Settlement
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
+            {/* CTA Buttons */}
+            <div className="flex gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => setActiveSettleDetail(null)}
-                className="flex-1 py-3 border border-line rounded-xl text-xs font-bold text-inksoft hover:bg-paper transition"
+                className="flex-1 py-2.5 border border-line rounded-xl text-xs font-bold text-inksoft hover:bg-paper transition"
               >
-                Cancel
+                Back to List
               </button>
               <button
                 type="button"
@@ -1188,44 +1382,49 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                   setActiveSettleDetail(null);
                 }}
                 disabled={activeSettleDetail.amount <= 0 || activeSettleDetail.amount > activeSettleDetail.originalAmount + 1}
-                className="flex-1 bg-brand text-white py-3 rounded-xl font-bold text-xs hover:opacity-90 active:scale-95 transition disabled:opacity-40"
+                className="flex-[2] bg-brand text-white py-2.5 rounded-xl font-bold text-xs hover:opacity-95 active:scale-98 transition disabled:opacity-40 shadow-sm flex items-center justify-center gap-1.5"
               >
-                Confirm Payment
+                <ShieldCheck size={14} /> Authorize Clearance ({rupee(activeSettleDetail.amount)})
               </button>
             </div>
           </div>
         ) : view === "list" ? (
-          <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+          <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+            {/* Simplification highlight banner */}
+            <div className="bg-brand-soft/20 border border-brand/20 rounded-xl p-3 flex items-center gap-2.5 text-xs text-brand font-medium">
+              <Sparkles size={16} className="shrink-0" />
+              <span>
+                Simplified path: <strong>{settlements.length} transaction{settlements.length !== 1 ? "s" : ""}</strong> fully resolves all group member debts.
+              </span>
+            </div>
+
             {settlements.map((t, i) => (
               <div
                 key={i}
-                style={{ animationDelay: `${i * 60}ms` }}
-                className="flex items-center justify-between border border-line rounded-xl px-4 py-3 bg-paper/20 animate-fadeInUp"
+                style={{ animationDelay: `${i * 50}ms` }}
+                className="flex items-center justify-between border border-line rounded-xl p-3.5 bg-card hover:border-brand/30 transition-all animate-fadeInUp shadow-card"
               >
                 <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-ink">
-                    <span>{nameOf(t.from)}</span>
+                  <div className="flex items-center gap-2 text-xs font-bold text-ink">
+                    <span className="px-2 py-0.5 rounded-md bg-paper border border-line text-ink">{nameOf(t.from)}</span>
                     <ArrowRight size={12} className="text-inksoft" />
-                    <span>{nameOf(t.to)}</span>
+                    <span className="px-2 py-0.5 rounded-md bg-brand-soft/30 border border-brand/20 text-brand">{nameOf(t.to)}</span>
                   </div>
-                  <div className="text-[10px] text-inksoft font-medium">Simplified IOU</div>
+                  <div className="text-[10px] text-inksoft font-mono">
+                    Collapsible direct clearing voucher
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-mono font-bold text-red-500">{rupee(t.amount)}</span>
+                  <span className="font-mono font-bold text-ink text-sm">{rupee(t.amount)}</span>
                   <button
                     onClick={() => setActiveSettleDetail({ from: t.from, to: t.to, amount: t.amount, originalAmount: t.amount })}
-                    className="bg-brand text-white text-[10px] font-bold px-2.5 py-1 rounded-lg hover:opacity-90 active:scale-95 transition"
+                    className="bg-brand text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:opacity-95 active:scale-95 transition shadow-sm"
                   >
-                    Settle
+                    Issue Voucher
                   </button>
                 </div>
               </div>
             ))}
-            <div className="flex justify-center pt-3">
-              <div className="inline-block border-2 border-brand text-brand font-sans font-bold text-[10px] tracking-wider px-4 py-1.5 rounded-xl -rotate-3 animate-stampIn">
-                MIN. TRANSACTIONS
-              </div>
-            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center animate-fadeIn">
@@ -1311,7 +1510,7 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                       <path
                         d={`M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`}
                         fill="none"
-                        stroke={isEdgeActive ? "var(--color-brand-mint)" : "var(--color-inksoft)"}
+                        stroke={isEdgeActive ? "var(--color-brand)" : "var(--color-inksoft)"}
                         strokeWidth={hoveredNode === t.from || hoveredNode === t.to ? 3 : 2}
                         markerEnd={`url(#${
                           hoveredNode === t.from || hoveredNode === t.to
@@ -1331,7 +1530,7 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                           fill="var(--color-card)"
                           stroke="var(--color-line)"
                           strokeWidth="1"
-                          className="shadow-sm group-hover/edge:stroke-brand group-hover/edge:fill-brand-soft dark:group-hover/edge:fill-brand-soft/20 transition-all duration-155"
+                          className="shadow-sm group-hover/edge:stroke-brand group-hover/edge:fill-brand-soft dark:group-hover/edge:fill-brand-soft/20 transition-all duration-150"
                         />
                         <text
                           textAnchor="middle"
@@ -1365,7 +1564,7 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                       className="cursor-pointer"
                       onMouseEnter={() => setHoveredNode(m._id)}
                       onMouseLeave={() => setHoveredNode(null)}
-                      style={{ opacity: isNodeActive ? 1 : 0.4, transition: "all 0.25s ease" }}
+                      style={{ opacity: isNodeActive ? 1 : 0.35, transition: "all 0.25s ease" }}
                     >
                       {/* Circle Background */}
                       <circle
@@ -1400,8 +1599,7 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
               </svg>
             </div>
             <div className="text-[10px] text-inksoft text-center mt-3 leading-relaxed">
-              💡 Hover nodes to highlight balances. <br />
-              Click any green payment path to settle that specific balance transaction.
+              💡 Hover nodes to highlight connected flows. Click any transfer path to open its clearance voucher.
             </div>
           </div>
         )}
