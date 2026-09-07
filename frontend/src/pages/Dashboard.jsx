@@ -105,22 +105,40 @@ export default function Dashboard() {
 
   return (
     <Layout onNewGroup={() => setShowCreate(true)}>
-      <main className="w-full px-6 py-8 sm:px-8 sm:py-10 min-h-[calc(100vh-4rem)]">
+      <main className="w-full px-6 py-8 sm:px-8 sm:py-10 min-h-[calc(100vh-4rem)] relative overflow-hidden">
         
+        {/* Subtle Ambient Background Radial Glow (like Landing Page) */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-80 bg-gradient-to-b from-brand/10 via-brand/5 to-transparent blur-3xl pointer-events-none -z-10" />
+
         {/* Welcome header & Add button */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <span className="text-[10px] uppercase font-bold tracking-wider text-inksoft">Ledger Book</span>
-            <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-ink mt-0.5 animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand animate-pulse" />
+              <span className="text-[10px] font-mono uppercase font-bold tracking-widest text-inksoft">
+                EXECUTIVE LEDGER
+              </span>
+            </div>
+            <h1 className="font-sans text-2xl sm:text-3xl font-extrabold tracking-tight text-ink mt-1 animate-fadeIn">
               {greeting()}, {user?.name?.split(" ")[0]}
             </h1>
           </div>
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center justify-center gap-2 bg-brand text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:opacity-90 active:scale-95 transition-all"
-          >
-            <Plus size={16} /> New Group
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center justify-center gap-2 bg-brand text-white px-5 py-2.5 rounded-xl font-bold text-xs shadow-sm hover:opacity-95 active:scale-95 transition-all shadow-brand/20 hover:shadow-md"
+            >
+              <Plus size={15} /> New Ledger
+            </button>
+            <button
+              onClick={handleSeedDemo}
+              disabled={seeding}
+              className="inline-flex items-center justify-center gap-1.5 border border-line bg-card hover:bg-paper text-ink px-4 py-2.5 rounded-xl font-semibold text-xs transition disabled:opacity-50 shadow-xs"
+              title="Seed sample Goa trip ledger"
+            >
+              {seeding ? "Seeding..." : "⚡ Seed Demo"}
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -171,78 +189,77 @@ export default function Dashboard() {
             {analytics && (
               <>
                 {/* Unified Executive Liquidity Barometer */}
-                <div className="bg-card border border-line rounded-3xl p-6 sm:p-8 shadow-card space-y-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line">
+                <div className="bg-gradient-to-br from-card via-card to-paper/60 border border-line rounded-3xl p-6 sm:p-8 shadow-card space-y-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-80 h-80 bg-brand/5 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+                  
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-line relative z-10">
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] font-mono uppercase tracking-widest text-inksoft font-bold">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-[10px] font-mono uppercase tracking-widest text-inksoft font-bold">
                           TOTAL NET POSITION
                         </span>
-                        <span className={`text-[9px] font-mono font-extrabold px-2 py-0.5 rounded-full ${
+                        <span className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full border transition-all ${
                           analytics.netBalance > 0.5 
-                            ? "bg-brand-soft text-brand dark:bg-brand-soft dark:text-brand" 
+                            ? "bg-brand-soft text-brand border-brand/20 dark:bg-brand-soft dark:text-brand" 
                             : analytics.netBalance < -0.5 
-                            ? "bg-red-500/10 text-red-600" 
-                            : "bg-paper text-inksoft"
+                            ? "bg-red-500/10 text-red-600 border-red-500/20" 
+                            : "bg-paper text-inksoft border-line"
                         }`}>
-                          {analytics.netBalance > 0.5 ? "SURPLUS POSITION" : analytics.netBalance < -0.5 ? "LIABILITY DEFICIT" : "FULLY BALANCED"}
+                          {analytics.netBalance > 0.5 ? "● NET SURPLUS" : analytics.netBalance < -0.5 ? "● LIABILITY DEFICIT" : "● BALANCED"}
                         </span>
                       </div>
-                      <div className={`text-3xl sm:text-4xl font-extrabold font-mono tracking-tight mt-1 ls-mono ${
+                      <div className={`text-4xl sm:text-5xl font-black font-mono tracking-tight mt-2 ls-mono ${
                         analytics.netBalance > 0.5 ? "text-brand" : analytics.netBalance < -0.5 ? "text-red-600" : "text-ink"
                       }`}>
                         {analytics.netBalance >= 0 ? "+" : "-"} {rupee(analytics.netBalance)}
                       </div>
+                      <p className="text-xs text-inksoft mt-1 font-medium">
+                        Real-time simplified cash position across all shared balances
+                      </p>
                     </div>
 
-                    {/* Fast Quick Action Buttons */}
-                    <div className="flex items-center gap-2.5">
-                      <button
-                        onClick={() => setShowCreate(true)}
-                        className="inline-flex items-center justify-center gap-2 bg-brand text-white px-4 py-2 rounded-xl font-bold text-xs shadow-sm hover:opacity-95 active:scale-95 transition"
-                      >
-                        <Plus size={14} /> New Ledger
-                      </button>
-                      <button
-                        onClick={handleSeedDemo}
-                        disabled={seeding}
-                        className="inline-flex items-center justify-center gap-1.5 border border-line bg-paper/60 hover:bg-paper text-ink px-3.5 py-2 rounded-xl font-semibold text-xs transition disabled:opacity-50"
-                        title="Seed sample Goa trip ledger"
-                      >
-                        {seeding ? "Seeding..." : "⚡ Seed Demo"}
-                      </button>
+                    {/* Quick Overview Badges */}
+                    <div className="flex items-center gap-2">
+                      <div className="border border-line rounded-2xl px-4 py-2.5 bg-paper/60 dark:bg-card/70 flex items-center gap-3 shadow-xs">
+                        <div className="w-2 h-2 rounded-full bg-brand" />
+                        <div>
+                          <div className="text-[9px] font-mono uppercase font-bold text-inksoft">STATUS</div>
+                          <div className="text-xs font-bold text-ink font-mono">
+                            {analytics.netBalance > 0 ? "Positive Cashflow" : analytics.netBalance < 0 ? "Settlement Due" : "Clear Portfolio"}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Liquidity Sub-Metrics Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 relative z-10">
                     {/* You Are Owed */}
                     <button
                       type="button"
                       onClick={() => setBreakdownView(breakdownView === "owed" ? null : "owed")}
-                      className={`text-left border rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between group/metric ${
+                      className={`text-left border rounded-2xl p-5 transition-all duration-200 flex flex-col justify-between group/metric relative overflow-hidden ${
                         breakdownView === "owed"
-                          ? "bg-brand-soft/40 border-brand shadow-sm"
-                          : "bg-paper/40 border-line hover:border-brand/40 hover:bg-paper/60 cursor-pointer"
+                          ? "bg-brand-soft/50 border-brand shadow-sm ring-1 ring-brand/30"
+                          : "bg-paper/50 dark:bg-paper/20 border-line hover:border-brand/50 hover:bg-paper/80 cursor-pointer shadow-xs hover:shadow-sm"
                       }`}
                       title="Click to see which friends owe you and in which trips"
                     >
-                      <div className="flex items-center justify-between text-inksoft mb-1">
+                      <div className="flex items-center justify-between text-inksoft mb-2">
                         <span className="text-[10px] font-mono uppercase font-bold tracking-wider group-hover/metric:text-brand transition">
                           YOU ARE OWED
                         </span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[9px] font-mono font-bold text-inksoft/70">Breakdown</span>
-                          <span className="text-brand font-extrabold text-xs">↗</span>
+                        <div className="w-6 h-6 rounded-full bg-brand-soft text-brand flex items-center justify-center text-xs font-bold shadow-xs">
+                          ↗
                         </div>
                       </div>
-                      <div className="text-xl font-extrabold font-mono text-brand ls-mono">
+                      <div className="text-2xl font-black font-mono text-brand ls-mono">
                         {rupee(analytics.youAreOwed)}
                       </div>
-                      <div className="flex items-center justify-between text-[9px] text-inksoft mt-1">
-                        <span>Incoming group assets</span>
-                        <span className="font-bold text-brand group-hover/metric:underline">
-                          {breakdownView === "owed" ? "Hide details ▲" : "Inspect who owes you ▼"}
+                      <div className="flex items-center justify-between text-[10px] text-inksoft mt-2 pt-2 border-t border-line/60">
+                        <span>Incoming balances</span>
+                        <span className="font-bold text-brand group-hover/metric:underline flex items-center gap-0.5">
+                          {breakdownView === "owed" ? "Hide details ▲" : "View Breakdown ▼"}
                         </span>
                       </div>
                     </button>
@@ -251,43 +268,47 @@ export default function Dashboard() {
                     <button
                       type="button"
                       onClick={() => setBreakdownView(breakdownView === "owe" ? null : "owe")}
-                      className={`text-left border rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between group/metric ${
+                      className={`text-left border rounded-2xl p-5 transition-all duration-200 flex flex-col justify-between group/metric relative overflow-hidden ${
                         breakdownView === "owe"
-                          ? "bg-red-500/10 border-red-500/40 shadow-sm"
-                          : "bg-paper/40 border-line hover:border-red-500/40 hover:bg-paper/60 cursor-pointer"
+                          ? "bg-red-500/10 border-red-500/40 shadow-sm ring-1 ring-red-500/30"
+                          : "bg-paper/50 dark:bg-paper/20 border-line hover:border-red-500/50 hover:bg-paper/80 cursor-pointer shadow-xs hover:shadow-sm"
                       }`}
                       title="Click to see who you owe and in which trips"
                     >
-                      <div className="flex items-center justify-between text-inksoft mb-1">
+                      <div className="flex items-center justify-between text-inksoft mb-2">
                         <span className="text-[10px] font-mono uppercase font-bold tracking-wider group-hover/metric:text-red-600 transition">
                           YOU OWE
                         </span>
-                        <div className="flex items-center gap-1">
-                          <span className="text-[9px] font-mono font-bold text-inksoft/70">Breakdown</span>
-                          <span className="text-red-600 font-extrabold text-xs">↘</span>
+                        <div className="w-6 h-6 rounded-full bg-red-500/10 text-red-600 flex items-center justify-center text-xs font-bold shadow-xs">
+                          ↘
                         </div>
                       </div>
-                      <div className="text-xl font-extrabold font-mono text-red-600 ls-mono">
+                      <div className="text-2xl font-black font-mono text-red-600 ls-mono">
                         {rupee(analytics.youOwe)}
                       </div>
-                      <div className="flex items-center justify-between text-[9px] text-inksoft mt-1">
-                        <span>Pending debt resolutions</span>
-                        <span className="font-bold text-red-600 group-hover/metric:underline">
-                          {breakdownView === "owe" ? "Hide details ▲" : "Inspect who you owe ▼"}
+                      <div className="flex items-center justify-between text-[10px] text-inksoft mt-2 pt-2 border-t border-line/60">
+                        <span>Pending resolutions</span>
+                        <span className="font-bold text-red-600 group-hover/metric:underline flex items-center gap-0.5">
+                          {breakdownView === "owe" ? "Hide details ▲" : "View Breakdown ▼"}
                         </span>
                       </div>
                     </button>
 
                     {/* Personal Total Spend */}
-                    <div className="border border-line rounded-2xl p-4 bg-paper/40 flex flex-col justify-between">
-                      <div className="flex items-center justify-between text-inksoft mb-1">
+                    <div className="border border-line rounded-2xl p-5 bg-paper/50 dark:bg-paper/20 flex flex-col justify-between shadow-xs">
+                      <div className="flex items-center justify-between text-inksoft mb-2">
                         <span className="text-[10px] font-mono uppercase font-bold tracking-wider">YOUR SPEND SHARE</span>
-                        <span className="text-ink font-mono font-bold text-xs">₹</span>
+                        <div className="w-6 h-6 rounded-full bg-paper text-ink flex items-center justify-center text-xs font-mono font-bold border border-line">
+                          ₹
+                        </div>
                       </div>
-                      <div className="text-xl font-extrabold font-mono text-ink ls-mono">
+                      <div className="text-2xl font-black font-mono text-ink ls-mono">
                         {rupee(analytics.totalExpenses)}
                       </div>
-                      <span className="text-[9px] text-inksoft mt-1">Lifetime personal expenditure</span>
+                      <div className="flex items-center justify-between text-[10px] text-inksoft mt-2 pt-2 border-t border-line/60">
+                        <span>Lifetime personal expenditure</span>
+                        <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-inksoft">CUMULATIVE</span>
+                      </div>
                     </div>
                   </div>
 
@@ -720,10 +741,30 @@ export default function Dashboard() {
 
             {/* Groups Grid List */}
             <div>
-              <h2 className="text-xs font-bold uppercase tracking-wider text-inksoft mb-4">Your Ledgers</h2>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-sm font-bold uppercase tracking-wider text-ink flex items-center gap-2">
+                    <span>Your Active Ledgers</span>
+                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-paper border border-line text-inksoft">
+                      {groups.length} Total
+                    </span>
+                  </h2>
+                  <p className="text-xs text-inksoft mt-0.5">
+                    Individual shared expense books with automated debt simplification
+                  </p>
+                </div>
+                {groups.length > 0 && (
+                  <button
+                    onClick={() => setShowCreate(true)}
+                    className="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-brand hover:underline"
+                  >
+                    <Plus size={14} /> New Ledger
+                  </button>
+                )}
+              </div>
               
               {groups.length === 0 ? (
-                <div className="border border-dashed border-line rounded-2xl p-8 sm:p-14 text-center bg-card/50">
+                <div className="border border-dashed border-line rounded-3xl p-8 sm:p-14 text-center bg-card/50 shadow-card">
                   {/* Visual Vector Illustration */}
                   <div className="w-48 h-32 mx-auto mb-6 flex items-center justify-center opacity-85">
                     <svg viewBox="0 0 120 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
@@ -774,7 +815,6 @@ export default function Dashboard() {
               ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {groups.map((g) => {
-                    const [gradient] = accentFor(g._id);
                     const bal = g.yourBalance || 0;
                     const isCredit = bal > 0.5;
                     const isDebt = bal < -0.5;
@@ -783,20 +823,25 @@ export default function Dashboard() {
                       <button
                         key={g._id}
                         onClick={() => navigate(`/groups/${g._id}`)}
-                        className="group text-left bg-card border border-line rounded-3xl p-5 sm:p-6 shadow-card hover:shadow-card-hover hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
+                        className="group text-left bg-gradient-to-b from-card to-paper/40 border border-line rounded-3xl p-6 shadow-card hover:shadow-card-hover hover:border-brand/40 hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between relative overflow-hidden"
                       >
+                        {/* Ambient Card Corner Accent */}
+                        <div className={`absolute top-0 right-0 w-24 h-24 rounded-full blur-2xl pointer-events-none -mr-8 -mt-8 transition-opacity opacity-0 group-hover:opacity-100 ${
+                          isCredit ? "bg-brand/15" : isDebt ? "bg-red-500/15" : "bg-inksoft/10"
+                        }`} />
+
                         {/* Top Monogram & Balance Status */}
-                        <div>
+                        <div className="relative z-10">
                           <div className="flex items-start justify-between gap-2 mb-4">
-                            <div className="w-10 h-10 rounded-2xl bg-brand text-white flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform duration-200">
+                            <div className="w-11 h-11 rounded-2xl bg-brand text-white flex items-center justify-center font-bold text-base shadow-sm group-hover:scale-105 transition-transform duration-200">
                               {g.name.charAt(0).toUpperCase()}
                             </div>
                             {(isCredit || isDebt) ? (
                               <span
-                                className={`text-[10px] font-bold font-mono px-2.5 py-1 rounded-full ls-mono ${
+                                className={`text-[11px] font-bold font-mono px-3 py-1 rounded-full ls-mono border transition-all ${
                                   isCredit 
-                                    ? "bg-brand-soft text-brand dark:bg-brand-soft dark:text-brand" 
-                                    : "bg-red-500/10 text-red-600"
+                                    ? "bg-brand-soft text-brand border-brand/20 dark:bg-brand-soft dark:text-brand" 
+                                    : "bg-red-500/10 text-red-600 border-red-500/20"
                                 }`}
                               >
                                 {isCredit ? "+" : "-"}
@@ -809,38 +854,40 @@ export default function Dashboard() {
                             )}
                           </div>
 
-                          {/* Ledger Name */}
+                          {/* Ledger Name & Details */}
                           <h3 className="font-sans font-bold text-base text-ink truncate mb-1 group-hover:text-brand transition">
                             {g.name}
                           </h3>
-                          <span className="text-[10px] font-mono text-inksoft uppercase tracking-wider block">
-                            PASSBOOK LEDGER
-                          </span>
+                          <div className="flex items-center gap-2 text-[10px] font-mono text-inksoft">
+                            <span className="uppercase tracking-wider font-bold">PASSBOOK</span>
+                            <span>•</span>
+                            <span>{g.members?.length || 0} {g.members?.length === 1 ? "member" : "members"}</span>
+                          </div>
                         </div>
 
                         {/* Bottom Avatar Stack & Resolution Link */}
-                        <div className="mt-5 pt-4 border-t border-line flex items-center justify-between">
+                        <div className="mt-6 pt-4 border-t border-line flex items-center justify-between relative z-10">
                           {/* Avatar Stack */}
-                          <div className="flex items-center -space-x-1.5 overflow-hidden">
+                          <div className="flex items-center -space-x-2 overflow-hidden">
                             {g.members.slice(0, 3).map((m, idx) => (
                               <div
                                 key={idx}
-                                className="w-6 h-6 rounded-full bg-brand text-white flex items-center justify-center text-[9px] font-bold ring-2 ring-card shadow-sm"
+                                className="w-7 h-7 rounded-full bg-brand text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-card shadow-sm"
                                 title={typeof m === "object" ? m.name : m}
                               >
                                 {typeof m === "object" && m.name ? m.name.charAt(0).toUpperCase() : "M"}
                               </div>
                             ))}
                             {g.members.length > 3 && (
-                              <div className="w-6 h-6 rounded-full bg-paper text-inksoft flex items-center justify-center text-[9px] font-mono font-bold ring-2 ring-card border border-line">
+                              <div className="w-7 h-7 rounded-full bg-paper text-inksoft flex items-center justify-center text-[10px] font-mono font-bold ring-2 ring-card border border-line">
                                 +{g.members.length - 3}
                               </div>
                             )}
                           </div>
 
-                          <span className="text-[11px] font-bold text-brand group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                            <span>Open</span>
-                            <span className="text-xs">→</span>
+                          <span className="text-xs font-bold text-brand group-hover:translate-x-1 transition-transform flex items-center gap-1.5">
+                            <span>Open Passbook</span>
+                            <ArrowRight size={13} />
                           </span>
                         </div>
                       </button>

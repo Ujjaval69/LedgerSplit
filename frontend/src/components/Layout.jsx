@@ -207,22 +207,26 @@ export default function Layout({ children, onNewGroup }) {
                   <button
                     key={g._id}
                     onClick={() => goTo(`/groups/${g._id}`)}
-                    className={`w-full flex items-center justify-between py-2 px-3 rounded-xl text-xs font-medium transition-all text-left ${
+                    className={`w-full flex items-center justify-between py-2 px-3 rounded-xl text-sm font-semibold transition-all text-left group ${
                       isGroupActive
                         ? "bg-brand-soft text-brand font-bold shadow-sm dark:bg-brand-soft dark:text-brand"
-                        : "text-inksoft hover:bg-paper hover:text-ink"
+                        : "text-ink/80 dark:text-ink/85 hover:bg-paper hover:text-ink"
                     }`}
                   >
-                    <span className="truncate flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full ${isGroupActive ? "bg-brand" : "bg-line"}`} />
-                      <span className="truncate">{g.name}</span>
+                    <span className="truncate flex items-center gap-2.5">
+                      <span className={`w-2 h-2 rounded-full shrink-0 transition-colors ${isGroupActive ? "bg-brand ring-2 ring-brand/30" : "bg-line group-hover:bg-inksoft/40"}`} />
+                      <span className="truncate tracking-tight">{g.name}</span>
                     </span>
-                    {isGroupActive && <ChevronRight size={12} className="shrink-0 text-brand" />}
+                    {isGroupActive ? (
+                      <ChevronRight size={14} className="shrink-0 text-brand" />
+                    ) : (
+                      <ChevronRight size={13} className="shrink-0 text-inksoft/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    )}
                   </button>
                 );
               })}
               {groups.filter(g => !g.isArchived).length === 0 && (
-                <p className="text-[11px] text-inksoft/60 px-3 py-1.5 italic">
+                <p className="text-xs text-inksoft px-3 py-2 italic">
                   No active ledgers yet.
                 </p>
               )}
@@ -233,7 +237,7 @@ export default function Layout({ children, onNewGroup }) {
               <div className="mt-5 border-t border-line pt-3">
                 <button
                   onClick={() => setShowArchived(!showArchived)}
-                  className="w-full flex items-center justify-between px-3 text-[9px] font-mono uppercase tracking-widest text-inksoft font-bold hover:text-ink transition"
+                  className="w-full flex items-center justify-between px-3 text-[10px] font-mono uppercase tracking-widest text-inksoft font-bold hover:text-ink transition"
                 >
                   <span>Archived ({groups.filter(g => g.isArchived).length})</span>
                   {showArchived ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -246,14 +250,14 @@ export default function Layout({ children, onNewGroup }) {
                         <button
                           key={g._id}
                           onClick={() => goTo(`/groups/${g._id}`)}
-                          className={`w-full flex items-center justify-between py-1.5 px-3 rounded-xl text-xs font-medium transition-colors text-left opacity-60 hover:opacity-100 ${
+                          className={`w-full flex items-center justify-between py-1.5 px-3 rounded-xl text-xs font-semibold transition-colors text-left opacity-75 hover:opacity-100 ${
                             isGroupActive
-                              ? "bg-brand-soft text-brand font-semibold dark:bg-brand-soft dark:text-brand"
+                              ? "bg-brand-soft text-brand font-bold dark:bg-brand-soft dark:text-brand"
                               : "text-inksoft hover:bg-paper hover:text-ink"
                           }`}
                         >
                           <span className="truncate flex items-center gap-2">
-                            <Archive size={12} className="shrink-0 text-inksoft" />
+                            <Archive size={13} className="shrink-0 text-inksoft" />
                             <span className="truncate">{g.name}</span>
                           </span>
                         </button>
@@ -294,13 +298,13 @@ export default function Layout({ children, onNewGroup }) {
         <header className="h-16 shrink-0 bg-card/85 backdrop-blur-xl border-b border-line flex items-center justify-between px-6 lg:px-8 transition-colors duration-200 relative z-10">
           {/* Search bar */}
           <div className="relative w-full max-w-sm hidden sm:block">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-inksoft" size={14} />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-inksoft transition-colors pointer-events-none" size={14} />
             <input
               type="text"
               placeholder="Quick search ledgers & expenses..."
-              className="w-full pl-9 pr-12 py-1.5 rounded-xl border border-line bg-paper/40 outline-none text-xs text-ink transition focus:border-brand focus:ring-1 focus:ring-brand/10 dark:bg-paper/10"
+              className="w-full pl-9 pr-12 py-2 rounded-xl border border-line bg-paper/80 dark:bg-card/90 outline-none text-xs font-medium text-ink placeholder:text-inksoft placeholder:font-normal transition focus:border-brand focus:ring-2 focus:ring-brand/20 shadow-sm"
             />
-            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono border border-line px-1.5 py-0.5 rounded bg-card text-inksoft pointer-events-none">
+            <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono border border-line px-1.5 py-0.5 rounded bg-card text-inksoft font-semibold pointer-events-none shadow-xs">
               ⌘K
             </kbd>
           </div>
