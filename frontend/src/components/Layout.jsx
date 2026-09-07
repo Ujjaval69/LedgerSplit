@@ -302,7 +302,7 @@ export default function Layout({ children, onNewGroup }) {
             <input
               type="text"
               placeholder="Quick search ledgers & expenses..."
-              className="w-full pl-9 pr-12 py-2 rounded-xl border border-line bg-paper/80 dark:bg-card/90 outline-none text-xs font-medium text-ink placeholder:text-inksoft placeholder:font-normal transition focus:border-brand focus:ring-2 focus:ring-brand/20 shadow-sm"
+              className="w-full pl-9 pr-12 py-2 rounded-xl border border-line bg-white text-[#0D1117] placeholder:text-gray-400 dark:bg-[#121721] dark:text-[#F0F3F6] dark:placeholder:text-gray-400 outline-none text-xs font-medium transition focus:border-brand focus:ring-2 focus:ring-brand/20 shadow-sm"
             />
             <kbd className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] font-mono border border-line px-1.5 py-0.5 rounded bg-card text-inksoft font-semibold pointer-events-none shadow-xs">
               ⌘K

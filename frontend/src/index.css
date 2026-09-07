@@ -16,6 +16,10 @@
   --color-debt: #991B1B; /* Oxblood / Burnt crimson */
 }
 
+input, textarea, select {
+  color: var(--color-ink);
+}
+
 .dark {
   --color-paper: #0B0E14; /* Deep obsidian slate */
   --color-card: #121721; /* Low-reflection charcoal */

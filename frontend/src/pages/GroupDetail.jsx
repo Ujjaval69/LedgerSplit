@@ -427,7 +427,7 @@ export default function GroupDetail() {
                   placeholder="Search description, payer..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-40 sm:w-48 border border-line bg-card rounded-xl pl-8 pr-8 py-1.5 text-[11px] outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
+                  className="w-40 sm:w-48 border border-line bg-white text-[#0D1117] placeholder:text-gray-400 dark:bg-[#121721] dark:text-[#F0F3F6] dark:placeholder:text-gray-400 rounded-xl pl-8 pr-8 py-1.5 text-[11px] outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition"
                 />
                 <Search size={11} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-inksoft" />
                 {searchQuery && (
