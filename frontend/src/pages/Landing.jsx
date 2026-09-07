@@ -345,7 +345,7 @@ export default function Landing() {
               <div className="md:col-span-6 space-y-6">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <label className="text-xs font-bold text-inksoft uppercase tracking-wider">
+                    <label htmlFor="demo-bill-amount-slider" className="text-xs font-bold text-inksoft uppercase tracking-wider">
                       Shared Bill Amount
                     </label>
                     <span className="font-mono text-xl font-extrabold text-brand ls-mono">
@@ -353,15 +353,21 @@ export default function Landing() {
                     </span>
                   </div>
                   <input
+                    id="demo-bill-amount-slider"
                     type="range"
                     min="1500"
                     max="15000"
                     step="1500"
                     value={demoAmount}
                     onChange={(e) => setDemoAmount(parseInt(e.target.value))}
+                    aria-label="Simulated shared bill amount to split"
+                    aria-valuemin="1500"
+                    aria-valuemax="15000"
+                    aria-valuenow={demoAmount}
+                    aria-valuetext={`₹${demoAmount.toLocaleString('en-IN')}`}
                     className="w-full h-2 bg-paper rounded-lg appearance-none cursor-pointer accent-brand border border-line"
                   />
-                  <div className="flex justify-between text-[10px] font-mono text-inksoft/60 mt-1">
+                  <div className="flex justify-between text-[10px] font-mono text-inksoft mt-1">
                     <span>₹1,500</span>
                     <span>₹7,500</span>
                     <span>₹15,000</span>
@@ -374,7 +380,7 @@ export default function Landing() {
                     <div className="font-mono text-base font-extrabold text-ink mt-0.5 ls-mono">
                       {rupee(sharePerPerson)}
                     </div>
-                    <span className="text-[9px] text-inksoft/80 font-medium">Split evenly across 3</span>
+                    <span className="text-[9px] text-inksoft font-medium">Split evenly across 3</span>
                   </div>
 
                   <div className="border border-brand/20 rounded-2xl p-3.5 bg-brand-soft">
@@ -382,14 +388,14 @@ export default function Landing() {
                     <div className="font-mono text-base font-extrabold text-brand mt-0.5 ls-mono">
                       2 Transfers
                     </div>
-                    <span className="text-[9px] text-brand/80 font-medium">6 redundant loops saved</span>
+                    <span className="text-[9px] text-brand/80 font-medium">4 redundant loops saved</span>
                   </div>
                 </div>
 
                 <div className="space-y-2 border-t border-line pt-4 text-xs">
                   <div className="flex items-center gap-2 text-ink">
                     <CheckCircle2 size={14} className="text-brand shrink-0" />
-                    <span><strong>{demoPayer}</strong> is credited {rupee(demoAmount - sharePerPerson)}.</span>
+                    <span><strong>{demoPayer}</strong> receives {rupee(demoAmount - sharePerPerson)} total.</span>
                   </div>
                   <div className="flex items-center gap-2 text-ink">
                     <CheckCircle2 size={14} className="text-brand shrink-0" />
@@ -400,8 +406,15 @@ export default function Landing() {
 
               {/* Right Visual Flowchart SVG */}
               <div className="md:col-span-6 flex items-center justify-center">
-                <div className="w-full max-w-xs h-64 border border-line rounded-2xl bg-paper/30 flex items-center justify-center relative overflow-hidden">
-                  <svg width="280" height="240" className="overflow-visible">
+                <div className="w-full max-w-xs h-64 border border-line rounded-2xl bg-paper/30 flex items-center justify-center relative overflow-hidden p-2">
+                  <svg
+                    viewBox="0 0 280 240"
+                    role="img"
+                    aria-label={`Debt flow graph: ${demoPayer} is owed by the other members. Each pays ${rupee(sharePerPerson)}.`}
+                    className="w-full max-w-[280px] h-auto aspect-[280/240] overflow-visible"
+                  >
+                    <title>Bill Settlement Simulation</title>
+                    <desc>{`Visual flow showing ${demoPayer} receiving payments from group members.`}</desc>
                     {/* Circle guide outline */}
                     <circle cx="140" cy="120" r="75" fill="none" stroke="var(--color-line)" strokeWidth="1" strokeDasharray="3 3" />
 

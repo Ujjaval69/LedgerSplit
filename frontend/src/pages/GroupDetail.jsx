@@ -75,6 +75,16 @@ export default function GroupDetail() {
     type: "danger"
   });
 
+  // Close receipt preview on Escape
+  useEffect(() => {
+    if (!activeReceiptPreview) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setActiveReceiptPreview(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeReceiptPreview]);
+
   function showConfirm(title, message, onConfirmAction, type = "danger") {
     setConfirmState({
       isOpen: true,
@@ -864,8 +874,20 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
     }
   }
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="expense-entry-modal-title"
       className="fixed inset-0 bg-ink/50 backdrop-blur-sm flex items-center justify-center z-50 px-4 animate-fadeIn"
       onClick={onClose}
     >
@@ -879,17 +901,17 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
             <span className="text-[9px] font-mono uppercase tracking-widest text-brand font-bold">
               EXPENSE ENTRY
             </span>
-            <h3 className="font-sans font-bold text-lg text-ink">
+            <h3 id="expense-entry-modal-title" className="font-sans font-bold text-lg text-ink">
               {expenseToEdit ? "Edit Transaction" : "Record New Expense"}
             </h3>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition">
+          <button onClick={onClose} aria-label="Close modal" className="p-1 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition">
             <X size={18} />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 text-xs bg-red-50 dark:bg-red-950/20 border border-debt/30 text-debt rounded-xl px-3.5 py-2.5 animate-fadeIn">
+          <div role="alert" className="mb-4 text-xs bg-red-50 dark:bg-red-950/20 border border-debt/30 text-debt rounded-xl px-3.5 py-2.5 animate-fadeIn">
             {error}
           </div>
         )}
@@ -899,33 +921,37 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
           {!expenseToEdit && (
             <div className="border border-dashed border-line rounded-2xl p-3 text-center bg-paper/30 hover:bg-paper/60 transition relative cursor-pointer group/import">
               <input
+                id="expense-csv-upload"
                 type="file"
                 accept=".csv"
+                aria-label="Import CSV spreadsheet"
                 onChange={handleCSVImport}
                 className="absolute inset-0 opacity-0 cursor-pointer"
               />
-              <div className="text-[10px] text-inksoft font-semibold group-hover/import:text-brand transition flex items-center justify-center gap-1.5">
+              <label htmlFor="expense-csv-upload" className="text-[10px] text-inksoft font-semibold group-hover/import:text-brand transition flex items-center justify-center gap-1.5 cursor-pointer">
                 <Download size={13} className="rotate-180 text-inksoft group-hover/import:text-brand transition" />
                 <span>Drop CSV spreadsheet to batch import</span>
-              </div>
+              </label>
             </div>
           )}
 
           {/* STEP 1: Amount & Particulars */}
           <div className="space-y-3.5 bg-paper/20 border border-line rounded-2xl p-4">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-mono uppercase font-bold tracking-wider text-inksoft">
+              <label htmlFor="expense-amount-input" className="text-[9px] font-mono uppercase font-bold tracking-wider text-inksoft cursor-pointer">
                 STEP 1: AMOUNT &amp; DETAILS
-              </span>
+              </label>
               <span className="text-[9px] font-mono text-brand font-bold">INR (₹)</span>
             </div>
 
             {/* Oversized Currency Input */}
             <div className="relative">
               <input
+                id="expense-amount-input"
                 type="number"
                 step="0.01"
                 required
+                aria-label="Expense amount in INR"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 className="w-full text-center text-3xl font-mono font-extrabold text-ink bg-card border border-line rounded-xl py-3 px-4 outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition ls-mono"
@@ -935,10 +961,11 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
 
             {/* Description with Autocomplete */}
             <div className="relative">
-              <label className="block text-[10px] uppercase font-mono font-bold tracking-wider text-inksoft mb-1">
+              <label htmlFor="expense-desc-input" className="block text-[10px] uppercase font-mono font-bold tracking-wider text-inksoft mb-1">
                 Description
               </label>
               <input
+                id="expense-desc-input"
                 required
                 autoFocus
                 value={description}
@@ -970,10 +997,11 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
             {/* Category & Date Grid */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] uppercase font-mono font-bold tracking-wider text-inksoft mb-1">
+                <label htmlFor="expense-cat-select" className="block text-[10px] uppercase font-mono font-bold tracking-wider text-inksoft mb-1">
                   Category
                 </label>
                 <select
+                  id="expense-cat-select"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full border border-line bg-card rounded-xl px-2.5 py-1.5 text-xs outline-none focus:border-brand text-ink"
@@ -986,10 +1014,11 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
                 </select>
               </div>
               <div>
-                <label className="block text-[10px] uppercase font-mono font-bold tracking-wider text-inksoft mb-1">
+                <label htmlFor="expense-date-input" className="block text-[10px] uppercase font-mono font-bold tracking-wider text-inksoft mb-1">
                   Date
                 </label>
                 <input
+                  id="expense-date-input"
                   type="date"
                   required
                   value={date}
@@ -1089,12 +1118,16 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
                   const m = group.members.find((mem) => mem._id === id);
                   return (
                     <div key={id} className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-bold text-ink">{m?.name}</span>
+                      <label htmlFor={`split-detail-input-${id}`} className="text-xs font-bold text-ink cursor-pointer">
+                        {m?.name}
+                      </label>
                       <div className="flex items-center gap-1">
                         {splitType === "exact" && <span className="text-xs font-mono text-inksoft">₹</span>}
                         <input
+                          id={`split-detail-input-${id}`}
                           type="number"
                           step="0.01"
+                          aria-label={`Split amount for ${m?.name}`}
                           value={splitDetails[id] || ""}
                           onChange={(e) => updateDetail(id, e.target.value)}
                           className="w-20 border border-line rounded-lg px-2 py-1 text-xs font-mono font-bold outline-none bg-card focus:border-brand text-ink"
@@ -1132,11 +1165,15 @@ function AddExpenseModal({ group, expenses, currentUserId, expenseToEdit, onClos
 
           {/* Receipt attachment */}
           <div className="flex items-center justify-between pt-1 text-xs">
-            <label className="text-[10px] font-mono uppercase font-bold text-inksoft">RECEIPT INVOICE</label>
+            <label htmlFor="expense-receipt-file-input" className="text-[10px] font-mono uppercase font-bold text-inksoft cursor-pointer">
+              RECEIPT INVOICE
+            </label>
             <div className="flex items-center gap-2">
               <input
+                id="expense-receipt-file-input"
                 type="file"
                 accept="image/*"
+                aria-label="Upload receipt image"
                 onChange={(e) => {
                   if (e.target.files[0]) {
                     setReceiptUrl("https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80");
@@ -1184,8 +1221,23 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
     };
   });
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (activeSettleDetail) setActiveSettleDetail(null);
+        else onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose, activeSettleDetail]);
+
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settle-modal-title"
       className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn backdrop-blur-sm"
       onClick={onClose}
     >
@@ -1199,28 +1251,30 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
         <div className="flex justify-between items-start mb-3">
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-sans font-bold text-base text-ink">
+              <h3 id="settle-modal-title" className="font-sans font-bold text-base text-ink">
                 {activeSettleDetail ? "Digital Clearance Voucher" : "Simplified Settlement"}
               </h3>
               <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider text-brand bg-brand-soft/30 px-2 py-0.5 rounded-full border border-brand/20">
-                <Sparkles size={10} /> Min. Cash Flow
+                <Sparkles size={10} /> Optimized Settlement
               </span>
             </div>
             <p className="text-[11px] text-inksoft mt-0.5">
               {activeSettleDetail
                 ? `Voucher Ref: #VCH-${(activeSettleDetail.from || "").slice(-4).toUpperCase()}-${(activeSettleDetail.to || "").slice(-4).toUpperCase()}`
-                : `Algorithmic net-balancing reduced group debt to ${settlements.length} direct clearance voucher${settlements.length === 1 ? "" : "s"}.`}
+                : `LedgerSplit combined multiple balances into ${settlements.length} direct settlement${settlements.length === 1 ? "" : "s"}.`}
             </p>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition">
+          <button onClick={onClose} aria-label="Close modal" className="p-1 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition">
             <X size={16} />
           </button>
         </div>
 
         {/* View Switcher Tabs (Only when not in voucher clearance mode and has settlements) */}
         {!activeSettleDetail && settlements.length > 0 && (
-          <div className="flex bg-paper rounded-xl p-1 mb-4 border border-line">
+          <div role="tablist" aria-label="Settlement views" className="flex bg-paper rounded-xl p-1 mb-4 border border-line">
             <button
+              role="tab"
+              aria-selected={view === "list"}
               onClick={() => setView("list")}
               className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 view === "list"
@@ -1231,6 +1285,8 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
               List View ({settlements.length})
             </button>
             <button
+              role="tab"
+              aria-selected={view === "graph"}
               onClick={() => setView("graph")}
               className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 view === "graph"
@@ -1290,10 +1346,10 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
             {/* Partial Settlement Slider & Synced Amount Input */}
             <div className="space-y-2 bg-card border border-line rounded-2xl p-4">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-bold uppercase tracking-wider text-inksoft">
+                <label htmlFor="voucher-payment-input" className="text-[11px] font-bold uppercase tracking-wider text-inksoft cursor-pointer">
                   Payment Amount
                 </label>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   {[25, 50, 100].map((pct) => (
                     <button
                       key={pct}
@@ -1311,6 +1367,23 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                       {pct}%
                     </button>
                   ))}
+                  {activeSettleDetail.originalAmount > 100 && activeSettleDetail.originalAmount % 100 !== 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const rounded = Math.floor(activeSettleDetail.originalAmount / 100) * 100;
+                        setActiveSettleDetail({ ...activeSettleDetail, amount: rounded });
+                      }}
+                      className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md border transition-all ${
+                        activeSettleDetail.amount === Math.floor(activeSettleDetail.originalAmount / 100) * 100
+                          ? "bg-brand text-white border-brand"
+                          : "border-line text-inksoft hover:text-ink hover:bg-paper"
+                      }`}
+                      title="Round down to nearest ₹100"
+                    >
+                      ₹{Math.floor(activeSettleDetail.originalAmount / 100) * 100}
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -1320,12 +1393,14 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                   ₹
                 </span>
                 <input
+                  id="voucher-payment-input"
                   type="number"
                   step="1"
                   min="1"
                   max={activeSettleDetail.originalAmount}
                   required
                   autoFocus
+                  aria-label="Payment amount in INR"
                   value={activeSettleDetail.amount}
                   onChange={(e) => {
                     const val = parseFloat(e.target.value) || 0;
@@ -1337,12 +1412,18 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
 
               {/* Slider */}
               <input
+                id="voucher-partial-slider"
                 type="range"
                 min="1"
                 max={activeSettleDetail.originalAmount}
                 step="1"
                 value={Math.min(activeSettleDetail.amount, activeSettleDetail.originalAmount)}
                 onChange={(e) => setActiveSettleDetail({ ...activeSettleDetail, amount: Number(e.target.value) })}
+                aria-label="Settlement payment amount slider"
+                aria-valuemin="1"
+                aria-valuemax={activeSettleDetail.originalAmount}
+                aria-valuenow={activeSettleDetail.amount}
+                aria-valuetext={`₹${Math.round(activeSettleDetail.amount).toLocaleString('en-IN')}`}
                 className="w-full accent-brand cursor-pointer h-1.5 bg-paper rounded-lg appearance-none"
               />
 
@@ -1389,12 +1470,12 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
             </div>
           </div>
         ) : view === "list" ? (
-          <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1">
+          <div className="space-y-2.5 max-h-[50vh] overflow-y-auto pr-1" aria-label="Simplified settlement list">
             {/* Simplification highlight banner */}
             <div className="bg-brand-soft/20 border border-brand/20 rounded-xl p-3 flex items-center gap-2.5 text-xs text-brand font-medium">
               <Sparkles size={16} className="shrink-0" />
               <span>
-                Simplified path: <strong>{settlements.length} transaction{settlements.length !== 1 ? "s" : ""}</strong> fully resolves all group member debts.
+                Simplified path: <strong>{settlements.length} direct payment{settlements.length !== 1 ? "s" : ""}</strong> fully clears all group debts.
               </span>
             </div>
 
@@ -1411,13 +1492,14 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
                     <span className="px-2 py-0.5 rounded-md bg-brand-soft/30 border border-brand/20 text-brand">{nameOf(t.to)}</span>
                   </div>
                   <div className="text-[10px] text-inksoft font-mono">
-                    Collapsible direct clearing voucher
+                    Direct settlement transfer
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-mono font-bold text-ink text-sm">{rupee(t.amount)}</span>
                   <button
                     onClick={() => setActiveSettleDetail({ from: t.from, to: t.to, amount: t.amount, originalAmount: t.amount })}
+                    aria-label={`Issue voucher for ${nameOf(t.from)} paying ${nameOf(t.to)} ${rupee(t.amount)}`}
                     className="bg-brand text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:opacity-95 active:scale-95 transition shadow-sm"
                   >
                     Issue Voucher
@@ -1428,8 +1510,15 @@ function SettleModal({ settlements, members, nameOf, onSettle, onClose }) {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center animate-fadeIn">
-            <div className="w-full relative flex items-center justify-center">
-              <svg width="360" height="360" className="overflow-visible">
+            <div className="w-full relative flex items-center justify-center p-2">
+              <svg
+                viewBox="0 0 360 360"
+                role="img"
+                aria-label={`Debt flow graph: ${settlements.length} direct settlement transfers between group members`}
+                className="w-full max-w-[320px] sm:max-w-[360px] h-auto aspect-square overflow-visible"
+              >
+                <title>Debt Simplification Diagram</title>
+                <desc>{`Visual flow diagram showing ${settlements.length} direct settlement transfers.`}</desc>
                 <defs>
                   <marker
                     id="arrow-head"
@@ -1613,6 +1702,15 @@ function AddMemberModal({ groupId, onClose, onAdded }) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
@@ -1637,32 +1735,40 @@ function AddMemberModal({ groupId, onClose, onAdded }) {
 
   return (
     <div
-      className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-member-modal-title"
+      className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn backdrop-blur-sm"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-modal border border-line animate-scaleIn"
       >
-        <div className="flex justify-between items-center mb-5">
-          <h3 className="font-sans font-bold text-lg text-ink">Add a Member</h3>
-          <button onClick={onClose} className="text-inksoft hover:text-ink transition">
+        <div className="flex justify-between items-center mb-4">
+          <h3 id="add-member-modal-title" className="font-sans font-bold text-lg text-ink">Add a Member</h3>
+          <button onClick={onClose} aria-label="Close dialog" className="p-1 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition">
             <X size={18} />
           </button>
         </div>
         
+        <p className="text-[11px] text-inksoft mb-4 leading-relaxed">
+          Enter your friend's email address. They will be added to this ledger and can view balances when signed in.
+        </p>
+
         {error && (
-          <div className="mb-4 text-xs bg-red-50 dark:bg-red-950/20 border border-debt/30 text-debt rounded-lg px-3 py-2.5 animate-fadeIn">
+          <div role="alert" className="mb-4 text-xs bg-red-50 dark:bg-red-950/20 border border-debt/30 text-debt rounded-lg px-3 py-2.5 animate-fadeIn">
             {error}
           </div>
         )}
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">
+            <label htmlFor="add-member-email-input" className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1 cursor-pointer">
               Their email address
             </label>
             <input
+              id="add-member-email-input"
               type="email"
               required
               autoFocus
@@ -1687,17 +1793,30 @@ function AddMemberModal({ groupId, onClose, onAdded }) {
 }
 
 function ConfirmModal({ isOpen, title, message, onConfirm, onCancel, type }) {
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onCancel]);
+
   if (!isOpen) return null;
   return (
     <div
-      className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-modal-title"
+      className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn backdrop-blur-sm"
       onClick={onCancel}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-modal border border-line animate-scaleIn"
       >
-        <h3 className="font-sans font-bold text-base text-ink mb-2">{title}</h3>
+        <h3 id="confirm-modal-title" className="font-sans font-bold text-base text-ink mb-2">{title}</h3>
         <p className="text-xs text-inksoft mb-6 leading-relaxed">{message}</p>
         <div className="flex gap-3 justify-end">
           <button

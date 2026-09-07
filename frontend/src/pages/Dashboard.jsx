@@ -665,9 +665,21 @@ function CreateGroupModal({ onClose, onCreated }) {
     }
   }
 
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
     <div
-      className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-ledger-title"
+      className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 px-4 animate-fadeIn backdrop-blur-sm"
       onClick={onClose}
     >
       <div
@@ -675,22 +687,25 @@ function CreateGroupModal({ onClose, onCreated }) {
         className="bg-card rounded-2xl p-6 w-full max-w-sm shadow-modal border border-line animate-scaleIn"
       >
         <div className="flex justify-between items-center mb-5">
-          <h3 className="font-sans font-bold text-lg text-ink">New Ledger</h3>
-          <button onClick={onClose} aria-label="Close dialog" className="text-inksoft hover:text-ink transition rounded">
+          <h3 id="create-ledger-title" className="font-sans font-bold text-lg text-ink">New Ledger</h3>
+          <button onClick={onClose} aria-label="Close dialog" className="p-1 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition">
             <X size={18} />
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 text-xs bg-red-50 dark:bg-red-950/20 border border-debt/30 text-debt rounded-lg px-3 py-2.5 animate-fadeIn">
+          <div role="alert" className="mb-4 text-xs bg-red-50 dark:bg-red-950/20 border border-debt/30 text-debt rounded-lg px-3 py-2.5 animate-fadeIn">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">Group name</label>
+            <label htmlFor="new-group-name" className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">
+              Group name
+            </label>
             <input
+              id="new-group-name"
               required
               autoFocus
               value={name}
@@ -700,10 +715,11 @@ function CreateGroupModal({ onClose, onCreated }) {
             />
           </div>
           <div>
-            <label className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">
+            <label htmlFor="new-group-emails" className="block text-[10px] uppercase font-bold tracking-wider text-inksoft mb-1">
               Invite by email (comma separated)
             </label>
             <input
+              id="new-group-emails"
               value={emails}
               onChange={(e) => setEmails(e.target.value)}
               className="w-full border border-line bg-card rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-brand focus:ring-1 focus:ring-brand/10 transition text-ink"
