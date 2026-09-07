@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Users, X, TrendingUp, TrendingDown, Scale, BookOpen } from "lucide-react";
+import { Plus, Users, X, TrendingUp, TrendingDown, Scale, BookOpen, ArrowRight, ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
 import api from "../api/client";
 import Layout from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
@@ -40,6 +40,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  const [breakdownView, setBreakdownView] = useState(null); // 'owed' | 'owe' | 'ledgers' | null
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -216,28 +217,66 @@ export default function Dashboard() {
                   {/* Liquidity Sub-Metrics Grid */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* You Are Owed */}
-                    <div className="border border-line rounded-2xl p-4 bg-paper/40 flex flex-col justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setBreakdownView(breakdownView === "owed" ? null : "owed")}
+                      className={`text-left border rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between group/metric ${
+                        breakdownView === "owed"
+                          ? "bg-brand-soft/40 border-brand shadow-sm"
+                          : "bg-paper/40 border-line hover:border-brand/40 hover:bg-paper/60 cursor-pointer"
+                      }`}
+                      title="Click to see which friends owe you and in which trips"
+                    >
                       <div className="flex items-center justify-between text-inksoft mb-1">
-                        <span className="text-[10px] font-mono uppercase font-bold tracking-wider">YOU ARE OWED</span>
-                        <span className="text-brand font-extrabold text-xs">↗</span>
+                        <span className="text-[10px] font-mono uppercase font-bold tracking-wider group-hover/metric:text-brand transition">
+                          YOU ARE OWED
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] font-mono font-bold text-inksoft/70">Breakdown</span>
+                          <span className="text-brand font-extrabold text-xs">↗</span>
+                        </div>
                       </div>
                       <div className="text-xl font-extrabold font-mono text-brand ls-mono">
                         {rupee(analytics.youAreOwed)}
                       </div>
-                      <span className="text-[9px] text-inksoft mt-1">Incoming group assets</span>
-                    </div>
+                      <div className="flex items-center justify-between text-[9px] text-inksoft mt-1">
+                        <span>Incoming group assets</span>
+                        <span className="font-bold text-brand group-hover/metric:underline">
+                          {breakdownView === "owed" ? "Hide details ▲" : "Inspect who owes you ▼"}
+                        </span>
+                      </div>
+                    </button>
 
                     {/* You Owe */}
-                    <div className="border border-line rounded-2xl p-4 bg-paper/40 flex flex-col justify-between">
+                    <button
+                      type="button"
+                      onClick={() => setBreakdownView(breakdownView === "owe" ? null : "owe")}
+                      className={`text-left border rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between group/metric ${
+                        breakdownView === "owe"
+                          ? "bg-red-500/10 border-red-500/40 shadow-sm"
+                          : "bg-paper/40 border-line hover:border-red-500/40 hover:bg-paper/60 cursor-pointer"
+                      }`}
+                      title="Click to see who you owe and in which trips"
+                    >
                       <div className="flex items-center justify-between text-inksoft mb-1">
-                        <span className="text-[10px] font-mono uppercase font-bold tracking-wider">YOU OWE</span>
-                        <span className="text-red-600 font-extrabold text-xs">↘</span>
+                        <span className="text-[10px] font-mono uppercase font-bold tracking-wider group-hover/metric:text-red-600 transition">
+                          YOU OWE
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[9px] font-mono font-bold text-inksoft/70">Breakdown</span>
+                          <span className="text-red-600 font-extrabold text-xs">↘</span>
+                        </div>
                       </div>
                       <div className="text-xl font-extrabold font-mono text-red-600 ls-mono">
                         {rupee(analytics.youOwe)}
                       </div>
-                      <span className="text-[9px] text-inksoft mt-1">Pending debt resolutions</span>
-                    </div>
+                      <div className="flex items-center justify-between text-[9px] text-inksoft mt-1">
+                        <span>Pending debt resolutions</span>
+                        <span className="font-bold text-red-600 group-hover/metric:underline">
+                          {breakdownView === "owe" ? "Hide details ▲" : "Inspect who you owe ▼"}
+                        </span>
+                      </div>
+                    </button>
 
                     {/* Personal Total Spend */}
                     <div className="border border-line rounded-2xl p-4 bg-paper/40 flex flex-col justify-between">
@@ -251,6 +290,203 @@ export default function Dashboard() {
                       <span className="text-[9px] text-inksoft mt-1">Lifetime personal expenditure</span>
                     </div>
                   </div>
+
+                  {/* Interactive Detailed Balance Breakdown Drawer (Answers "Who owes whom, and in which trip?") */}
+                  {breakdownView && (
+                    <div className="bg-card border border-line rounded-2xl p-5 shadow-modal animate-fadeInUp space-y-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-line pb-3">
+                        <div>
+                          <h3 className="font-sans font-bold text-sm text-ink flex items-center gap-2">
+                            <span>Detailed Balance Breakdown</span>
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-brand bg-brand-soft px-2 py-0.5 rounded-full border border-brand/20">
+                              By Person &amp; Trip
+                            </span>
+                          </h3>
+                          <p className="text-[11px] text-inksoft mt-0.5">
+                            See specifically who owes whom and in which ledger book.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex bg-paper border border-line rounded-xl p-0.5 text-[10px] font-bold">
+                            <button
+                              type="button"
+                              onClick={() => setBreakdownView("owed")}
+                              className={`px-3 py-1 rounded-lg transition-all ${
+                                breakdownView === "owed"
+                                  ? "bg-brand text-white shadow-sm"
+                                  : "text-inksoft hover:text-ink"
+                              }`}
+                            >
+                              Owed to You
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setBreakdownView("owe")}
+                              className={`px-3 py-1 rounded-lg transition-all ${
+                                breakdownView === "owe"
+                                  ? "bg-red-600 text-white shadow-sm"
+                                  : "text-inksoft hover:text-ink"
+                              }`}
+                            >
+                              You Owe
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setBreakdownView("ledgers")}
+                              className={`px-3 py-1 rounded-lg transition-all ${
+                                breakdownView === "ledgers"
+                                  ? "bg-card text-ink shadow-sm border border-line"
+                                  : "text-inksoft hover:text-ink"
+                              }`}
+                            >
+                              By Ledger ({groups.length})
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setBreakdownView(null)}
+                            className="p-1 rounded-lg text-inksoft hover:text-ink hover:bg-paper transition"
+                            aria-label="Close breakdown"
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Content Section: Owed to You */}
+                      {breakdownView === "owed" && (
+                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                          {(analytics?.debtBreakdown?.youAreOwed?.length || 0) === 0 ? (
+                            <div className="py-7 text-center text-xs text-inksoft space-y-2">
+                              <CheckCircle2 size={24} className="mx-auto text-brand opacity-80" />
+                              <p className="font-bold text-ink">No Incoming Receivables</p>
+                              <p className="text-[11px] max-w-sm mx-auto">
+                                None of your friends currently owe you money across your active ledgers.
+                              </p>
+                            </div>
+                          ) : (
+                            analytics.debtBreakdown.youAreOwed.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-between p-3.5 rounded-xl border border-line bg-paper/30 hover:border-brand/30 transition-all"
+                              >
+                                <div className="space-y-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-ink">{item.personName}</span>
+                                    <span className="text-[10px] text-brand font-bold bg-brand-soft px-1.5 py-0.5 rounded border border-brand/20">
+                                      owes you
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] text-inksoft flex items-center gap-1 font-medium">
+                                    <span>in trip / ledger:</span>
+                                    <span className="font-bold text-ink">{item.groupName}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="font-mono font-bold text-sm text-brand">{rupee(item.amount)}</span>
+                                  <button
+                                    onClick={() => navigate(`/groups/${item.groupId}`)}
+                                    className="inline-flex items-center gap-1 bg-brand text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:opacity-95 transition shadow-sm"
+                                  >
+                                    Open Ledger <ArrowRight size={11} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+
+                      {/* Content Section: You Owe */}
+                      {breakdownView === "owe" && (
+                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                          {(analytics?.debtBreakdown?.youOwe?.length || 0) === 0 ? (
+                            <div className="py-7 text-center text-xs text-inksoft space-y-2">
+                              <CheckCircle2 size={24} className="mx-auto text-brand opacity-80" />
+                              <p className="font-bold text-ink">Zero Outstanding Debts</p>
+                              <p className="text-[11px] max-w-sm mx-auto">
+                                You don't owe any money to anyone across your active ledgers.
+                              </p>
+                            </div>
+                          ) : (
+                            analytics.debtBreakdown.youOwe.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center justify-between p-3.5 rounded-xl border border-line bg-paper/30 hover:border-red-500/30 transition-all"
+                              >
+                                <div className="space-y-0.5">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-ink">You owe {item.personName}</span>
+                                    <span className="text-[10px] text-red-600 font-bold bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">
+                                      payable
+                                    </span>
+                                  </div>
+                                  <div className="text-[10px] text-inksoft flex items-center gap-1 font-medium">
+                                    <span>in trip / ledger:</span>
+                                    <span className="font-bold text-ink">{item.groupName}</span>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="font-mono font-bold text-sm text-red-600">-{rupee(item.amount)}</span>
+                                  <button
+                                    onClick={() => navigate(`/groups/${item.groupId}`)}
+                                    className="inline-flex items-center gap-1 bg-red-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg hover:opacity-95 transition shadow-sm"
+                                  >
+                                    Settle in Ledger <ArrowRight size={11} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+
+                      {/* Content Section: By Ledger Overview */}
+                      {breakdownView === "ledgers" && (
+                        <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                          {groups.map((g) => {
+                            const bal = g.yourBalance || 0;
+                            return (
+                              <div
+                                key={g._id}
+                                className="flex items-center justify-between p-3.5 rounded-xl border border-line bg-paper/30 hover:border-brand/30 transition-all"
+                              >
+                                <div className="space-y-0.5">
+                                  <span className="text-xs font-bold text-ink">{g.name}</span>
+                                  <div className="text-[10px] text-inksoft">
+                                    {g.members?.length || 0} members
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span
+                                    className={`font-mono font-bold text-xs ${
+                                      bal > 0.5
+                                        ? "text-brand"
+                                        : bal < -0.5
+                                        ? "text-red-600"
+                                        : "text-inksoft"
+                                    }`}
+                                  >
+                                    {bal > 0.5
+                                      ? `+${rupee(bal)} (You are owed)`
+                                      : bal < -0.5
+                                      ? `-${rupee(bal)} (You owe)`
+                                      : "Fully settled (₹0)"}
+                                  </span>
+                                  <button
+                                    onClick={() => navigate(`/groups/${g._id}`)}
+                                    className="inline-flex items-center gap-1 border border-line bg-card hover:bg-paper text-ink text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition"
+                                  >
+                                    Open Ledger <ArrowRight size={10} />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Settlement Ratio Progress Bar */}
                   {(() => {

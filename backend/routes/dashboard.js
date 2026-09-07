@@ -2,7 +2,7 @@ const express = require("express");
 const Group = require("../models/Group");
 const Expense = require("../models/Expense");
 const { protect } = require("../middleware/auth");
-const { computeNetBalances } = require("../utils/settleUp");
+const { computeNetBalances, simplifyDebts } = require("../utils/settleUp");
 
 const router = express.Router();
 router.use(protect);
@@ -25,6 +25,7 @@ router.get("/", async (req, res) => {
         youOwe: 0,
         youAreOwed: 0,
         netBalance: 0,
+        debtBreakdown: { youOwe: [], youAreOwed: [] },
         monthlyExpenses: [],
         categoryBreakdown: {
           Food: 0,
@@ -44,11 +45,14 @@ router.get("/", async (req, res) => {
     let youOwe = 0;
     let youAreOwed = 0;
     const memberIdsSet = new Set();
+    const youOweList = [];
+    const youAreOwedList = [];
 
     const groupBalances = await Promise.all(
       groups.map(async (group) => {
         const expenses = await Expense.find({ group: group._id });
-        const memberIds = [...group.members, ...(group.formerMembers || [])].map((m) => {
+        const allGroupMembers = [...group.members, ...(group.formerMembers || [])];
+        const memberIds = allGroupMembers.map((m) => {
           if (m._id.toString() !== userIdStr) {
             memberIdsSet.add(m._id.toString());
           }
@@ -56,13 +60,45 @@ router.get("/", async (req, res) => {
         });
         const netBalances = computeNetBalances(expenses, memberIds);
         const yourBalance = netBalances[userIdStr] || 0;
-        return yourBalance;
+
+        const settlements = simplifyDebts(netBalances);
+        const memberMap = {};
+        allGroupMembers.forEach((m) => {
+          memberMap[m._id.toString()] = m.name || m.email || "Member";
+        });
+
+        const owedToYouInGroup = [];
+        const youOweInGroup = [];
+
+        settlements.forEach((s) => {
+          if (s.to === userIdStr) {
+            owedToYouInGroup.push({
+              personId: s.from,
+              personName: memberMap[s.from] || "Member",
+              groupId: group._id,
+              groupName: group.name,
+              amount: s.amount
+            });
+          } else if (s.from === userIdStr) {
+            youOweInGroup.push({
+              personId: s.to,
+              personName: memberMap[s.to] || "Member",
+              groupId: group._id,
+              groupName: group.name,
+              amount: s.amount
+            });
+          }
+        });
+
+        return { yourBalance, owedToYouInGroup, youOweInGroup };
       })
     );
 
-    groupBalances.forEach((bal) => {
-      if (bal > 0) youAreOwed += bal;
-      if (bal < 0) youOwe += Math.abs(bal);
+    groupBalances.forEach((g) => {
+      if (g.yourBalance > 0) youAreOwed += g.yourBalance;
+      if (g.yourBalance < 0) youOwe += Math.abs(g.yourBalance);
+      youOweList.push(...g.youOweInGroup);
+      youAreOwedList.push(...g.owedToYouInGroup);
     });
 
     const netBalance = youAreOwed - youOwe;
@@ -190,6 +226,10 @@ router.get("/", async (req, res) => {
       youOwe: Math.round(youOwe * 100) / 100,
       youAreOwed: Math.round(youAreOwed * 100) / 100,
       netBalance: Math.round(netBalance * 100) / 100,
+      debtBreakdown: {
+        youOwe: youOweList,
+        youAreOwed: youAreOwedList
+      },
       monthlyExpenses,
       categoryBreakdown,
       recentExpenses
